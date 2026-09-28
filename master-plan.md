@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.0
+**Version:** 2.1
 **Date:** 28 Sep 2026 (Mon)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
 **Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v2.1:** the app is mobile-first for every role, Finance included, and Wednesday's demo runs entirely on a phone. Changed: 2.1, 2.2, 3, 4 (re-timed, build had not started by Mon 14:53), 5.1, 5.4, 6, 7, 8, 9, 12.1, 12.2, 12.5, 12.7.
 
 **What changed in v2.0:** the plan now covers the whole Ruangguru deal, not only Wednesday. Added: the deal at a glance (10), business stages with exit criteria and payment points (10), production tech stack (5.4), commercial terms and change control (11), financials (12), growth within Ruangguru (13), dependencies on Ruangguru (14), review cadence (15), sources (16). Sections 1 to 9 keep their old numbers so links from Notion, Drive and other threads still work. The Wednesday sprint plan (section 4) is unchanged.
 
@@ -65,6 +67,8 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
 
 ### 2.1 Wednesday demo: real vs. mocked
 
+**The whole demo runs on a phone** (decision log, 28 Sep). Every screen is designed for a phone first (about 390px wide) and still works on a laptop. On a phone, "split view" means the receipt and the claim data stacked on one screen, with tap-to-zoom on the receipt.
+
 **Real (built end-to-end, real logic):**
 
 - **Module A: Rules and audit engine.** Runs on every claim, produces rule hits with plain-language reasons and a Low/Medium/High risk label. Config-driven (limits and hours in one config file / settings screen), not hardcoded.
@@ -75,8 +79,8 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
   - Missing receipt flag
   - Risk score from the rule hits (scoring table in 5.3)
 - **Module B: Finance audit dashboard (thin, but real).**
-  - Risk-sorted central queue with filters (risk level, category, department, status)
-  - Claim detail: employee input next to the receipt image (split view), plus the list of rule hits and reasons
+  - Risk-sorted central queue as a list of cards (one claim per card, risk badge first), with filters (risk level, category, department, status)
+  - Claim detail: receipt image and employee input on one screen (stacked on phone, side by side on laptop), plus the list of rule hits and reasons
   - Approve / reject with standard rejection reasons
   - Batch approve all Low-risk claims
   - Export verified claims to CSV (opens in Excel)
@@ -101,10 +105,11 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
 
 From PRD v0.1, section 2, plus what production needs:
 
-1. Employee submission: receipt upload, claim form, instant budget warning, visual status tracker. **Delivered as a mobile-friendly web app that can be installed on the phone home screen (PWA), not a native app** (D-08, section 5.4).
+1. Employee submission: receipt upload (phone camera), claim form, instant budget warning, visual status tracker.
+   **The whole app, for every role (employee, manager, Finance, admin), is a mobile-first web app:** designed for the phone first, opens in the phone browser, can be pinned to the home screen (PWA), and still works on a laptop. Not a native store app (D-08, section 5.4).
 2. Rules and audit engine: productionize Module A with Ruangguru's real policy (OQ-04, OQ-05).
 3. Manager approval: 1-click approve, automatic hierarchy routing, high-value escalation, standard rejection reasons (OQ-06).
-4. Finance audit dashboard: productionize Module B.
+4. Finance audit dashboard: productionize Module B, phone-first (card queue, stacked claim detail, batch approve and export from the phone), with a wider layout on laptop.
 5. Added by this plan (not in PRD v0.1): login and roles, Admin settings for rules and users, audit trail of who changed what, org data import by CSV (since HRIS sync is Phase 2), backups.
 
 Effort estimate per item: section 12.1.
@@ -135,6 +140,8 @@ Effort estimate per item: section 12.1.
 
 Note: PRD v0.1 lists only three users and has no Admin. See discrepancy D-01.
 
+All four roles use the app on the phone first; laptop use is supported, not the main design target.
+
 Commercial roles (who Farrel deals with) are in section 10.1.
 
 ---
@@ -147,36 +154,42 @@ Stages after Wednesday are in section 10.
 
 OQ-00 answered: day job is low effort, projects are infrequent. Daytime hours Mon and Tue are usable, not just evenings. Revised budget:
 
-- Mon: 6h (daytime + evening)
-- Tue: 7h (daytime + evening)
+v2.1 re-timing: as of Mon 14:53 no stage had started (progress-log.md is empty), so the morning slots are gone. The phone-only demo adds about 1.5 hours (card layouts, stacked detail, phone-to-laptop connection and screen mirroring).
+
+- Mon: 6h (from about 15:00)
+- Tue: **8h** (was 7h; the extra hour pays for the phone-only demo; pending Farrel's confirmation, OQ-24)
 - Wed early morning before the demo: about 2h, for rehearsal and fixes only
-- **Total: about 15h.** More slack than the original 11h estimate. Stretch items (batch approve, settings screen) are back in the base plan, not just the cut-order fallback. Still no new features after Tue 23:00: extra hours buy safety margin and polish, not scope creep.
+- **Total: about 16h** (14h build + 2h rehearsal). Buffer is down to 1h. If Tue has only 7h, the settings screen (S4) is cut first. No new features after Tue 23:00.
 
 ### 4.2 Stage plan (one commit per stage, review between stages)
 
+Every screen is built at phone width (about 390px) first, then checked on a laptop.
+
 | # | When | Stage | Est. | Done when |
 |---|---|---|---|---|
-| S0 | Mon AM | Scaffold (Next.js, SQLite), data model, seed script: ~80 claims, 3 departments, planted problems (4 over-limit, 3 duplicate pairs, 5 weekend, 3 off-hours, 2 missing receipt), placeholder receipt images | 2h | `npm run dev` shows raw claim list from DB |
-| S1 | Mon midday to PM | Module A: rules engine + `rules.config` + tests that assert every planted problem is caught and clean claims stay Low | 2.5h | Tests pass on seed data |
-| S2 | Mon PM to evening | Module B part 1: risk-sorted queue, filters, claim detail split view with rule reasons | 2.5h | Auditor can find and open any flagged claim in 2 clicks |
-| S3 | Tue AM | Module B part 2: approve/reject with standard reasons, CSV export, batch approve Low | 2h | Exported CSV opens cleanly in Excel, batch approve works |
-| S4 | Tue midday | Settings screen for rules config (limits, hours) instead of raw JSON edit | 1.5h | Finance-facing user can change a limit and see it apply without touching code |
-| S5 | Tue PM | Demo harness: submit form (engine runs live), role switcher, MOCK labels everywhere, reset button | 1.5h | A weekend over-limit claim submitted live shows as High with 2 reasons |
-| S6 | Tue evening | Buffer for slippage from S0 to S5; if no slippage, polish (loading states, empty states, error messages) | 1.5h | No open bugs from earlier stages |
-| S7 | Wed early | Demo script, 2 rehearsals, fix only demo-breaking bugs, record a backup screen video | 2h | Full run in under 10 min, backup video saved |
+| S0 | Mon 15:00 to 17:00 | Scaffold (Next.js, SQLite), data model, seed script: ~80 claims, 3 departments, planted problems (4 over-limit, 3 duplicate pairs, 5 weekend, 3 off-hours, 2 missing receipt), placeholder receipt images; phone layout shell (top bar, bottom tabs) | 2h | Raw claim list shows on a phone opening the laptop's address |
+| S1 | Mon 17:00 to 20:00 (with break) | Module A: rules engine + `rules.config` + tests that assert every planted problem is caught and clean claims stay Low | 2.5h | Tests pass on seed data |
+| S2 | Mon evening (1.5h) + Tue AM (1.5h) | Module B part 1: risk-sorted queue as phone cards, filters in a bottom sheet, claim detail with receipt stacked above rule reasons and tap-to-zoom | 3h | On a phone, auditor finds and opens any flagged claim in 2 taps |
+| S3 | Tue late morning | Module B part 2: approve/reject with standard reasons, batch approve Low, CSV export (downloads on the phone) | 2h | Batch approve works on phone; exported CSV opens cleanly in Excel |
+| S4 | Tue early afternoon | Settings screen for rules config (limits, hours), usable on a phone | 1.5h | A limit changed on the phone changes a claim's risk without touching code |
+| S5 | Tue afternoon | Demo harness: submit form with camera or gallery upload (engine runs live), role switcher, MOCK labels everywhere, reset button; phone connects to the laptop over the phone's own hotspot; screen mirroring to laptop tested | 2h | A weekend over-limit claim submitted from the phone shows as High with 2 reasons, visible on the mirrored screen |
+| S6 | Tue evening | Buffer for slippage from S0 to S5; if none, polish (loading and empty states, tap targets, error messages) | 1h | No open bugs from earlier stages |
+| S7 | Wed early | Demo script, 2 full rehearsals on the phone, fix only demo-breaking bugs, record a backup screen video from the phone | 2h | Full run in under 10 min on the phone, backup video saved |
 
 ### 4.3 Cut order if behind (cut from the top)
 
 1. Polish (S6)
-2. Settings screen (S4): fall back to editable config file shown in the code editor
+2. Settings screen (S4): fall back to showing the config file on the laptop and saying so
 3. Batch approve Low risk
-4. Split view with receipt image (show text fields only)
+4. Receipt image in claim detail (show text fields only)
 5. CSV export
 6. Live submit form (fall back to seed data only)
 
-Never cut: engine + reasons + risk-sorted queue + claim detail. That is the demo.
+Never cut: engine + reasons + risk-sorted queue + claim detail, on the phone. That is the demo.
 
 **Hard stop:** no new features after Tue 23:00. Wednesday morning is rehearsal only.
+
+**Showing a phone to a room (fallbacks, in order):** mirror the phone to the laptop and share or project the laptop screen (method depends on the phone, OQ-23) → if mirroring fails, the laptop browser in phone-size view (Chrome device mode) → if the app fails, the backup video.
 
 ---
 
@@ -189,12 +202,12 @@ Picked for speed with Farrel's existing React/Vercel experience.
 | Area | Decision | Trade-off |
 |---|---|---|
 | App | Next.js (App Router) + TypeScript | One codebase for UI and API routes. Heavier than a pure SPA but no separate backend. |
-| UI | Tailwind + shadcn/ui | Fast, clean tables and dialogs. Generic look, fine for a demo. |
+| UI | Tailwind + shadcn/ui, phone-first layouts (cards, bottom sheets, bottom tabs) | Fast, clean components. Tables become cards on phones; more layout work than a desktop table. |
 | Data | SQLite via better-sqlite3, seed script | Zero setup. Does not persist on Vercel, so no shareable hosted link for Wednesday. Replaced by Postgres in Phase 1 (5.4). |
 | Receipts | Static placeholder images in `/public/mock-receipts` | No upload storage. |
 | Engine | Pure TypeScript functions, input = claim + config, output = rule hits + score | Easy to unit test; carries into Phase 1 unchanged. |
 | Config | `rules.config.json` (limits per category, near-limit %, working hours, score weights) | Editable without code change. No audit trail of config changes yet. |
-| Demo delivery | Run locally on Farrel's laptop | No dependency on venue Wi-Fi or a deploy. Backup: recorded video. |
+| Demo delivery | App runs on Farrel's laptop; the phone opens it over the phone's own hotspot (laptop joins the hotspot); phone screen mirrored to the laptop for the audience | No venue Wi-Fi and no deploy needed. Adds a phone-to-laptop link that must be tested in S5. Backups: Chrome phone-size view, then recorded video. |
 | Auth | None, role switcher | Acceptable only because it is labeled as demo. |
 
 ### 5.3 Risk scoring (placeholder, config-driven)
@@ -217,7 +230,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | Area | Decision | Trade-off |
 |---|---|---|
 | App | Same Next.js + TypeScript codebase as the demo | No rewrite. Ties Ruangguru to a JavaScript stack; fine unless their IT has a stack rule (OQ-09). |
-| Mobile | PWA: mobile-friendly web app, installable on the home screen, camera upload for receipts | Saves a separate app build and app store release. No offline mode, no push notifications on older iPhones; email notices cover approvals. PRD says "mobile" (D-08). |
+| Mobile | Mobile-first web app (PWA) for all roles: designed for phones first, installable on the home screen, camera upload for receipts, laptop layout as a secondary view | Confirmed by Farrel (28 Sep). No store accounts or store reviews. No offline mode; push notifications on iPhone only work after the app is added to the home screen, so email notices stay the main channel. |
 | Database | Postgres, via Supabase Pro | Managed backups, auth and file storage in one service. Region matters for data law (OQ-09, section 7). Swap-out path: plain Postgres on any cloud; the engine does not depend on Supabase. |
 | Data access | Typed query layer (Drizzle or Prisma) with migrations in the repo | Schema changes are tracked and repeatable. Small learning cost. |
 | Login | Supabase Auth with email magic link; company SSO (Google or Microsoft) if Ruangguru uses one | SSO removes password support work but needs Ruangguru IT to set it up (OQ-16). |
@@ -243,7 +256,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | ID | Assumption | Why it matters |
 |---|---|---|
 | A-01 | Audience on Wednesday is the financial lead, possibly with Finance staff. Not engineers. | Demo script is business-first, no code walkthrough. |
-| A-02 | A laptop + screen share or projector is available. | Local demo plan depends on it. |
+| A-02 | A laptop + screen share or projector is available, and the phone screen can be mirrored to the laptop. | The phone-only demo is invisible to a room or a call without it (OQ-23). |
 | A-03 | Flags mean "review", not "reject". Auto-reject is Ruangguru's policy call. | PRD says the system "menolak/menandai". Demo only marks. See D-03. |
 | A-04 | Employees enter only a transaction date today; time is optional. | Off-hours detection only works when time is entered. Without OCR, most real claims will have no time. |
 | A-05 | Duplicate means same amount + date + merchant. No image recognition. | This is what we can honestly claim without OCR. Must be said out loud in the demo. |
@@ -281,6 +294,9 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | OQ-20 | Can Farrel keep and reuse the generic parts (rules engine, audit queue) for other clients, and cite Ruangguru as a reference? | Financial lead / legal | SOW signing (IP clause); does not block build |
 | OQ-21 | Support expectations after go-live: working hours only or 24/7, response time for "can't submit claims" vs. small bugs | Financial lead | Proposal (retainer size) |
 | OQ-22 | Is the Wednesday demo work paid, or part of the sales effort? | Farrel | Nothing; record the answer for the effective rate |
+| OQ-23 | Which phone runs the demo (Android or iPhone), and how will it be mirrored to the laptop? Test it before S5. | Farrel | **Wednesday** (S5) |
+| OQ-24 | Can Farrel give Tuesday 8 hours instead of 7? If not, the settings screen (S4) is cut. | Farrel | **Wednesday** (S4) |
+| OQ-25 | Does Ruangguru's Finance team actually expect to audit on phones, or was "mobile" meant for employees? Confirm on Wednesday. | Farrel to ask financial lead | Phase 1 scope (Finance phone layout adds 8 to 16 hours) |
 
 ---
 
@@ -290,7 +306,10 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 |---|---|---|---|
 | Not enough build hours before Wednesday | Low (after OQ-00) | High | 15h plan with buffer stage S6, strict cut order, feature freeze Tue 23:00 |
 | Scope creep during the build ("just add manager approval") | Medium | High | Any addition goes through this plan as a decision log row first. Default answer before Wed: no. After Wed: change request (11.4). |
-| Demo breaks live | Medium | High | Run locally, reset button, rehearse twice, backup video |
+| Demo breaks live | Medium | High | Run locally, reset button, rehearse twice on the phone, backup video |
+| **Phone-only demo fails to show** (hotspot link drops, mirroring fails, small screen hard to read for a room) | Medium | High | Test hotspot + mirroring in S5, not Wednesday morning; large text and big risk badges; fallbacks in 4.3 (Chrome phone-size view, then video) |
+| **Wednesday plan has almost no slack** (16h total, 1h buffer, build started Mon afternoon) | Medium | High | OQ-24; cut order starts at S6 then S4; feature freeze Tue 23:00 |
+| **Auditing on a phone is slower for Finance at volume** (small receipt images, one claim per screen) | Medium | Medium | Tap-to-zoom receipts, batch approve for Low risk, laptop layout kept working; confirm the expectation (OQ-25) |
 | Audience thinks the whole system is done | Medium | High | MOCK labels on screen, one opening sentence on "what is real today", Thread 01 handout |
 | Placeholder rules look wrong to a finance expert ("our meal limit isn't 300k") | High | Low | Say upfront they are examples; show that changing the config changes results live |
 | Duplicate / off-hours detection oversold | Medium | Medium | Explain A-04 and A-05 plainly; position OCR as the Phase 2 answer |
@@ -324,6 +343,9 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-28 | Phase 1 "mobile" delivered as a PWA, not a native app. | Saves a second codebase and app store releases for a solo developer. | Thread 00, pending Farrel review |
 | 2026-09-28 | Phase 1 production stack: same Next.js codebase + Supabase Postgres/Auth/Storage + Vercel Pro, region subject to OQ-09. | No rewrite; one managed service; Vercel's free plan forbids commercial use. | Thread 00, pending Farrel review |
 | 2026-09-28 | No Phase 1 code before signed SOW and down payment received. | Protects 200+ hours of work. | Thread 00, pending Farrel review |
+| 2026-09-28 | v2.1: the app is a mobile-first web app (PWA) for every role, Finance included; not a native store app. Laptop layout kept as a secondary view. Replaces the v2.0 wording "mobile-friendly, employee submission only". | Farrel: "this app is for mobile" | Farrel |
+| 2026-09-28 | Wednesday demo runs entirely on a phone. Sprint plan re-timed (no stage had started by Mon 14:53); build rises from 13h to 14h; Tue budget 7h to 8h pending OQ-24, else S4 is cut. | Farrel chose a phone-only demo | Farrel (phone demo); Tue hours pending |
+| 2026-09-28 | Phase 1 estimate raised from 198 to 262h to 207 to 281h for the phone-first Finance dashboard. | Card queue, stacked detail and phone batch actions are extra layout work | Thread 00, pending Farrel review |
 
 ---
 
@@ -338,7 +360,8 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | D-05 | Duplicate receipt detection, method unspecified | Data match + file hash; image matching needs OCR (Phase 2) | Clarify in PRD 2.2 |
 | D-06 | No mention of authentication, audit trail, Admin settings | Added to Phase 1 (2.2 item 5) | Add in PRD revision, affects Phase 1 effort |
 | D-07 | Status "Draft untuk Review Stakeholder", nothing on the demo | Wednesday is a narrow prototype | Thread 01: one-page "apa yang sudah jalan vs. contoh" handout |
-| D-08 | "Pengajuan Karyawan (Mobile & Web)" implies a mobile app | Mobile-friendly web app installable on the phone (PWA); native app is out of scope (2.4) | Reword in PRD revision; say plainly what "mobile" means |
+| D-08 | "Pengajuan Karyawan (Mobile & Web)": mobile only for employee submission, and could be read as a store app | Whole app is mobile-first for every role, as a web app installable on the phone (PWA); native store app out of scope (2.4) | Reword PRD 2.1 and add a line that all modules are phone-first; say plainly it is not a Play Store / App Store app |
+| D-10 | Dashboard 2.4 "Tampilan split-screen": data beside receipt | On a phone, receipt and data are stacked on one screen with tap-to-zoom; side by side only on laptop | Reword PRD 2.4 |
 | D-09 | No commercial section, no stages, no support after launch | Sections 10 and 11 | Thread 01 turns these into the Indonesian proposal/SOW after Stage 1 |
 
 ---
@@ -366,7 +389,7 @@ Dates after Stage 0 are set in the proposal, not here, because they depend on Fa
 |---|---|---|---|
 | **0. Demo** (Wed 30 Sep) | Show the prototype; ask OQ-01, 02, 07, 12, 13, 14, 15 | Financial lead agrees to a discovery session, or says no | None (see OQ-22) |
 | **1. Discovery and contract** (about 1 to 2 weeks) | 1 or 2 sessions with Finance: real policy, categories, limits, hierarchy, headcount, claim volume, hosting rules, login, vendor requirements. Farrel writes the proposal; Thread 01 turns it into an Indonesian SOW. | Policy document received · OQ-04, 05, 06, 09, 14, 15, 16, 17, 18 answered · SOW signed · down payment received | **Invoice 1: 30%** on signing |
-| **2. Phase 1 build** (about 10 to 18 weeks part-time, section 12.5) | Build in 3 milestones, each demoed to Finance: **M1** login, roles, submission, receipts, engine on real policy · **M2** manager approval, routing, escalation, email notices · **M3** Finance dashboard, batch approve, export, audit trail, admin settings | Each milestone passes its written acceptance checklist in the SOW | **Invoice 2: 30%** at M2 acceptance |
+| **2. Phase 1 build** (about 10 to 19 weeks part-time, section 12.5) | Build in 3 milestones, each demoed to Finance: **M1** login, roles, submission, receipts, engine on real policy · **M2** manager approval, routing, escalation, email notices · **M3** Finance dashboard, batch approve, export, audit trail, admin settings | Each milestone passes its written acceptance checklist in the SOW | **Invoice 2: 30%** at M2 acceptance |
 | **3. Test and pilot** (about 2 to 4 weeks) | Ruangguru staff test (UAT); pilot with 1 department; measure the 1.3 baselines before and after | UAT sign-off · pilot runs one full claim cycle · no open High bugs | **Invoice 3: 30%** at UAT sign-off |
 | **4. Rollout** (about 1 to 2 weeks) | Import full org data, train Finance and managers, go live company-wide | All intended users can log in and submit · Finance trained | None |
 | **5. Warranty** (proposed 1 to 3 months after go-live) | Bugs fixed free; no new features | Warranty period ends | **Invoice 4: 10%** at end of warranty |
@@ -430,13 +453,14 @@ All prices below are **scenarios for Farrel to choose from, not quotes**. Nothin
 | Rules engine: real policy, admin config screen, config change log | 16 | 24 |
 | Manager approval: hierarchy routing, escalation, email notices, 1-click approve links | 32 | 40 |
 | Finance dashboard: harden demo version, paging, audit trail | 16 | 24 |
+| Phone-first Finance dashboard: card queue, stacked detail, phone batch actions and export (added v2.1) | 8 | 16 |
 | Security, backups, tests, UAT bug fixing | 32 | 40 |
 | Deploy, admin guide, training session | 12 | 16 |
-| **Build subtotal** | **172** | **228** |
-| Meetings, updates, change handling (+15%) | 26 | 34 |
-| **Total** | **198** | **262** |
+| **Build subtotal** | **180** | **244** |
+| Meetings, updates, change handling (+15%) | 27 | 37 |
+| **Total** | **207** | **281** |
 
-Midpoint: about 230 hours. Discovery (Stage 1) is extra, about 8 to 12 hours. Price from the high end: first builds for a new client almost always run long.
+Midpoint: about 244 hours. Employee and manager screens were already phone-sized in v2.0; only the Finance dashboard adds work. Discovery (Stage 1) is extra, about 8 to 12 hours. Price from the high end: first builds for a new client almost always run long.
 
 ### 12.2 Phase 1 price scenarios (hours × rate)
 
@@ -444,11 +468,11 @@ Farrel picks the hourly rate; the table shows what each choice means.
 
 | Hours | at Rp250,000/h | at Rp400,000/h | at Rp600,000/h |
 |---|---|---|---|
-| 198 (low) | Rp49.5M | Rp79.2M | Rp118.8M |
-| 230 (mid) | Rp57.5M | Rp92.0M | Rp138.0M |
-| 262 (high) | Rp65.5M | Rp104.8M | Rp157.2M |
+| 207 (low) | Rp51.8M | Rp82.8M | Rp124.2M |
+| 244 (mid) | Rp61.0M | Rp97.6M | Rp146.4M |
+| 281 (high) | Rp70.2M | Rp112.4M | Rp168.6M |
 
-Example payment split at Rp92.0M: Rp27.6M / Rp27.6M / Rp27.6M / Rp9.2M.
+Example payment split at Rp97.6M: Rp29.3M / Rp29.3M / Rp29.3M / Rp9.8M.
 
 ### 12.3 Market anchors (what the buyer will compare against)
 
@@ -490,7 +514,7 @@ Phase 2 OCR: about $0.01 per single-page receipt (Google Document AI Expense Par
 
 ### 12.5 Capacity and timeline reality
 
-At 15 to 20 hours a week (A-07), 198 to 262 hours means **about 10 to 18 weeks** for the Phase 1 build alone, before test, pilot and rollout. End-to-end from signing to go-live is realistically **4 to 5 months**. Do not promise a shorter date in the proposal unless Farrel adds hours or help. If Ruangguru needs it faster, the options are fewer Phase 1 features (move items to Phase 2) or more people, not the same scope in less time.
+At 15 to 20 hours a week (A-07), 207 to 281 hours means **about 10 to 19 weeks** for the Phase 1 build alone, before test, pilot and rollout. End-to-end from signing to go-live is realistically **4 to 5 months**. Do not promise a shorter date in the proposal unless Farrel adds hours or help. If Ruangguru needs it faster, the options are fewer Phase 1 features (move items to Phase 2) or more people, not the same scope in less time.
 
 ### 12.6 Tax and invoicing entity (confirm with a tax consultant before the first invoice)
 
@@ -503,11 +527,11 @@ At 15 to 20 hours a week (A-07), 198 to 262 hours means **about 10 to 18 weeks**
 
 | Line | Amount |
 |---|---|
-| Phase 1 fee (230h × Rp400K) | Rp92.0M |
-| PPh 21 withheld if invoicing as individual (four payments, ~2.5%) | about Rp2.3M withheld (not the final tax) |
+| Phase 1 fee (244h × Rp400K) | Rp97.6M |
+| PPh 21 withheld if invoicing as individual (four payments, ~2.5%) | about Rp2.4M withheld (not the final tax) |
 | Running costs during build, if Farrel pays them (~5 months × ~Rp1.3M) | about Rp6.5M, or zero if Ruangguru pays (OQ-19) |
-| Cash in hand before final tax | about Rp83M to Rp90M |
-| Effective hourly rate if the build takes 262h instead of 230h | Rp92.0M / 262h ≈ Rp351K/h (12% below the priced rate) |
+| Cash in hand before final tax | about Rp89M to Rp95M |
+| Effective hourly rate if the build takes 281h instead of 244h | Rp97.6M / 281h ≈ Rp347K/h (13% below the priced rate) |
 
 The last row is the main financial risk: every hour over the estimate comes out of Farrel's rate. Track hours weekly from Stage 1.
 

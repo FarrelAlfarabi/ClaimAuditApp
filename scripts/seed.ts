@@ -2,7 +2,7 @@
  * Seeds data/claims.db with ~80 claims. Deterministic (fixed PRNG seed), so reruns give identical data.
  *
  * MOCK: every department, employee, manager, merchant and amount here is invented placeholder data,
- * not Ruangguru's real org or policy. Limits and working hours come from config/rules.config.draft.json,
+ * not Ruangguru's real org or policy. Limits and working hours come from config/rules.config.json,
  * never hardcoded here.
  *
  * Planted problems (each planted claim carries exactly ONE problem, so S1 tests have unambiguous answers):
@@ -14,7 +14,7 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { DB_PATH, SCHEMA } from "../src/lib/db";
-import config from "../config/rules.config.draft.json";
+import config from "../config/rules.config.json";
 
 type Category = keyof typeof config.categoryLimits;
 const limits = config.categoryLimits as Record<Category, number>;

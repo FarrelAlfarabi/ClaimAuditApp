@@ -8,5 +8,5 @@ npm run dev     # re-seeds data/claims.db, then starts Next.js on http://localho
 npm run seed    # re-seed only
 ```
 
-All org data, limits and hours are MOCK placeholders (`config/rules.config.draft.json`).
+All org data, limits and hours are MOCK placeholders (`config/rules.config.json`).
 Planted problem answer key: `tests/fixtures/seed-expected.json`.

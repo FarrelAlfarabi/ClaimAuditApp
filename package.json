@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "npm run seed && next dev",
     "seed": "tsx scripts/seed.ts",
-    "build": "next build",
+    "build": "npm run seed && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

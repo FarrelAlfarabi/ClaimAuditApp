@@ -1,0 +1,23 @@
+{
+  "_note": "MOCK placeholder values, not Ruangguru policy (contoh, bukan kebijakan Ruangguru). Edit here; no code change needed.",
+  "currency": "IDR",
+  "categoryLimits": {
+    "Meals": 300000,
+    "Transport": 250000,
+    "Accommodation": 1500000,
+    "Office Supplies": 500000,
+    "Client Entertainment": 1000000
+  },
+  "nearLimitPct": 0.8,
+  "workingHours": { "start": "07:00", "end": "21:00" },
+  "weekendDays": [0, 6],
+  "scoreWeights": {
+    "over_limit": 3,
+    "duplicate": 3,
+    "near_limit": 1,
+    "weekend": 1,
+    "off_hours": 1,
+    "missing_receipt": 2
+  },
+  "riskBands": { "mediumMin": 1, "highMin": 3 }
+}

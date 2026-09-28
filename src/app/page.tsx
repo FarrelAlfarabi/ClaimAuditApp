@@ -1,5 +1,5 @@
 import { listClaims } from "@/lib/db";
-import config from "../../config/rules.config.draft.json";
+import config from "../../config/rules.config.json";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 

@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.1
+**Version:** 2.2
 **Date:** 28 Sep 2026 (Mon)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
 **Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v2.2:** Finance uses both phone and desktop, so the Finance screens get a full desktop layout as well as the phone layout (OQ-25 closed). Changed: 2.2, 3, 4.2 (S6), 5.4, 6.2, 7, 8. Effort and price unchanged: v2.1 already counted both layouts.
 
 **What changed in v2.1:** the app is mobile-first for every role, Finance included, and Wednesday's demo runs entirely on a phone. Changed: 2.1, 2.2, 3, 4 (re-timed, build had not started by Mon 14:53), 5.1, 5.4, 6, 7, 8, 9, 12.1, 12.2, 12.5, 12.7.
 
@@ -109,7 +111,7 @@ From PRD v0.1, section 2, plus what production needs:
    **The whole app, for every role (employee, manager, Finance, admin), is a mobile-first web app:** designed for the phone first, opens in the phone browser, can be pinned to the home screen (PWA), and still works on a laptop. Not a native store app (D-08, section 5.4).
 2. Rules and audit engine: productionize Module A with Ruangguru's real policy (OQ-04, OQ-05).
 3. Manager approval: 1-click approve, automatic hierarchy routing, high-value escalation, standard rejection reasons (OQ-06).
-4. Finance audit dashboard: productionize Module B, phone-first (card queue, stacked claim detail, batch approve and export from the phone), with a wider layout on laptop.
+4. Finance audit dashboard: productionize Module B with two equal layouts. **Desktop:** table queue, receipt side by side with claim data, batch approve, export. **Phone:** card queue, stacked claim detail with tap-to-zoom, batch approve and export from the phone. Finance uses both (OQ-25).
 5. Added by this plan (not in PRD v0.1): login and roles, Admin settings for rules and users, audit trail of who changed what, org data import by CSV (since HRIS sync is Phase 2), backups.
 
 Effort estimate per item: section 12.1.
@@ -140,7 +142,7 @@ Effort estimate per item: section 12.1.
 
 Note: PRD v0.1 lists only three users and has no Admin. See discrepancy D-01.
 
-All four roles use the app on the phone first; laptop use is supported, not the main design target.
+Employees and managers use the app on the phone first; laptop works but is not the main target. Finance uses both phone and desktop, so Finance screens are designed for both, with desktop as the main place for heavy audit work.
 
 Commercial roles (who Farrel deals with) are in section 10.1.
 
@@ -173,7 +175,7 @@ Every screen is built at phone width (about 390px) first, then checked on a lapt
 | S3 | Tue late morning | Module B part 2: approve/reject with standard reasons, batch approve Low, CSV export (downloads on the phone) | 2h | Batch approve works on phone; exported CSV opens cleanly in Excel |
 | S4 | Tue early afternoon | Settings screen for rules config (limits, hours), usable on a phone | 1.5h | A limit changed on the phone changes a claim's risk without touching code |
 | S5 | Tue afternoon | Demo harness: submit form with camera or gallery upload (engine runs live), role switcher, MOCK labels everywhere, reset button; phone connects to the laptop over the phone's own hotspot; screen mirroring to laptop tested | 2h | A weekend over-limit claim submitted from the phone shows as High with 2 reasons, visible on the mirrored screen |
-| S6 | Tue evening | Buffer for slippage from S0 to S5; if none, polish (loading and empty states, tap targets, error messages) | 1h | No open bugs from earlier stages |
+| S6 | Tue evening | Buffer for slippage from S0 to S5; if none, polish (loading and empty states, tap targets, error messages), then check the Finance queue and claim detail at laptop width | 1h | No open bugs from earlier stages |
 | S7 | Wed early | Demo script, 2 full rehearsals on the phone, fix only demo-breaking bugs, record a backup screen video from the phone | 2h | Full run in under 10 min on the phone, backup video saved |
 
 ### 4.3 Cut order if behind (cut from the top)
@@ -230,7 +232,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | Area | Decision | Trade-off |
 |---|---|---|
 | App | Same Next.js + TypeScript codebase as the demo | No rewrite. Ties Ruangguru to a JavaScript stack; fine unless their IT has a stack rule (OQ-09). |
-| Mobile | Mobile-first web app (PWA) for all roles: designed for phones first, installable on the home screen, camera upload for receipts, laptop layout as a secondary view | Confirmed by Farrel (28 Sep). No store accounts or store reviews. No offline mode; push notifications on iPhone only work after the app is added to the home screen, so email notices stay the main channel. |
+| Mobile | Web app (PWA) for all roles: phone-first for employees and managers, phone and desktop both first-class for Finance; installable on the home screen, camera upload for receipts | Confirmed by Farrel (28 Sep). No store accounts or store reviews. No offline mode; push notifications on iPhone only work after the app is added to the home screen, so email notices stay the main channel. |
 | Database | Postgres, via Supabase Pro | Managed backups, auth and file storage in one service. Region matters for data law (OQ-09, section 7). Swap-out path: plain Postgres on any cloud; the engine does not depend on Supabase. |
 | Data access | Typed query layer (Drizzle or Prisma) with migrations in the repo | Schema changes are tracked and repeatable. Small learning cost. |
 | Login | Supabase Auth with email magic link; company SSO (Google or Microsoft) if Ruangguru uses one | SSO removes password support work but needs Ruangguru IT to set it up (OQ-16). |
@@ -296,7 +298,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | OQ-22 | Is the Wednesday demo work paid, or part of the sales effort? | Farrel | Nothing; record the answer for the effective rate |
 | OQ-23 | Which phone runs the demo (Android or iPhone), and how will it be mirrored to the laptop? Test it before S5. | Farrel | **Wednesday** (S5) |
 | OQ-24 | Can Farrel give Tuesday 8 hours instead of 7? If not, the settings screen (S4) is cut. | Farrel | **Wednesday** (S4) |
-| OQ-25 | Does Ruangguru's Finance team actually expect to audit on phones, or was "mobile" meant for employees? Confirm on Wednesday. | Farrel to ask financial lead | Phase 1 scope (Finance phone layout adds 8 to 16 hours) |
+| ~~OQ-25~~ | ~~Does Finance audit on phones, or was "mobile" meant for employees?~~ **Answered (Farrel, 28 Sep):** Finance uses both phone and desktop. Both Finance layouts are in Phase 1 (12.1). | Farrel | Closed |
 
 ---
 
@@ -309,7 +311,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | Demo breaks live | Medium | High | Run locally, reset button, rehearse twice on the phone, backup video |
 | **Phone-only demo fails to show** (hotspot link drops, mirroring fails, small screen hard to read for a room) | Medium | High | Test hotspot + mirroring in S5, not Wednesday morning; large text and big risk badges; fallbacks in 4.3 (Chrome phone-size view, then video) |
 | **Wednesday plan has almost no slack** (16h total, 1h buffer, build started Mon afternoon) | Medium | High | OQ-24; cut order starts at S6 then S4; feature freeze Tue 23:00 |
-| **Auditing on a phone is slower for Finance at volume** (small receipt images, one claim per screen) | Medium | Medium | Tap-to-zoom receipts, batch approve for Low risk, laptop layout kept working; confirm the expectation (OQ-25) |
+| Auditing on a phone is slower for Finance at volume (small receipt images, one claim per screen) | Low (Finance also has desktop) | Medium | Desktop layout for heavy audit work; on phone, tap-to-zoom receipts and batch approve for Low risk |
 | Audience thinks the whole system is done | Medium | High | MOCK labels on screen, one opening sentence on "what is real today", Thread 01 handout |
 | Placeholder rules look wrong to a finance expert ("our meal limit isn't 300k") | High | Low | Say upfront they are examples; show that changing the config changes results live |
 | Duplicate / off-hours detection oversold | Medium | Medium | Explain A-04 and A-05 plainly; position OCR as the Phase 2 answer |
@@ -346,6 +348,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-28 | v2.1: the app is a mobile-first web app (PWA) for every role, Finance included; not a native store app. Laptop layout kept as a secondary view. Replaces the v2.0 wording "mobile-friendly, employee submission only". | Farrel: "this app is for mobile" | Farrel |
 | 2026-09-28 | Wednesday demo runs entirely on a phone. Sprint plan re-timed (no stage had started by Mon 14:53); build rises from 13h to 14h; Tue budget 7h to 8h pending OQ-24, else S4 is cut. | Farrel chose a phone-only demo | Farrel (phone demo); Tue hours pending |
 | 2026-09-28 | Phase 1 estimate raised from 198 to 262h to 207 to 281h for the phone-first Finance dashboard. | Card queue, stacked detail and phone batch actions are extra layout work | Thread 00, pending Farrel review |
+| 2026-09-28 | v2.2: Finance screens get two first-class layouts, desktop and phone. Wednesday stays phone-only; the Finance screens are checked at laptop width in S6 if time allows. Effort unchanged. | Farrel: Finance team uses desktop also (OQ-25 closed) | Farrel |
 
 ---
 

@@ -1,6 +1,6 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 28 Sep 2026 (Mon)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
@@ -113,35 +113,38 @@ Note: PRD v0.1 lists only three users and has no Admin. See discrepancy D-01.
 
 ### 4.1 Time budget: the real constraint
 
-Available build hours are **unconfirmed** (OQ-00). Farrel has a full-time job; if Mon and Tue are normal work days, realistic build time is evenings only:
+OQ-00 answered: day job is low effort, projects are infrequent. Daytime hours Mon and Tue are usable, not just evenings. Revised budget:
 
-- Mon 19:00 to 23:00: 4h
-- Tue 19:00 to 24:00: 5h
+- Mon: 6h (daytime + evening)
+- Tue: 7h (daytime + evening)
 - Wed early morning before the demo: about 2h, for rehearsal and fixes only
-- **Total: about 11h.** The plan below is sized to fit 11h. If Farrel has leave on Tuesday, the stretch items come back in; nothing else changes.
+- **Total: about 15h.** More slack than the original 11h estimate. Stretch items (batch approve, settings screen) are back in the base plan, not just the cut-order fallback. Still no new features after Tue 23:00 — extra hours buy safety margin and polish, not scope creep.
 
 ### 4.2 Stage plan (one commit per stage, review between stages)
 
 | # | When | Stage | Est. | Done when |
 |---|---|---|---|---|
-| S0 | Mon 19:00 to 21:00 | Scaffold (Next.js, SQLite), data model, seed script: ~80 claims, 3 departments, planted problems (4 over-limit, 3 duplicate pairs, 5 weekend, 3 off-hours, 2 missing receipt), placeholder receipt images | 2h | `npm run dev` shows raw claim list from DB |
-| S1 | Mon 21:00 to 23:00 | Module A: rules engine + `rules.config` + tests that assert every planted problem is caught and clean claims stay Low | 2h | Tests pass on seed data |
-| S2 | Tue 19:00 to 21:30 | Module B part 1: risk-sorted queue, filters, claim detail split view with rule reasons | 2.5h | Auditor can find and open any flagged claim in 2 clicks |
-| S3 | Tue 21:30 to 23:00 | Module B part 2: approve/reject with standard reasons, CSV export, batch approve Low | 1.5h | Exported CSV opens cleanly in Excel |
-| S4 | Tue 23:00 to 24:00 | Demo harness: submit form (engine runs live), role switcher, MOCK labels everywhere, reset button | 1h | A weekend over-limit claim submitted live shows as High with 2 reasons |
-| S5 | Wed early | Demo script, 2 rehearsals, fix only demo-breaking bugs, record a backup screen video | 2h | Full run in under 10 min, backup video saved |
+| S0 | Mon AM | Scaffold (Next.js, SQLite), data model, seed script: ~80 claims, 3 departments, planted problems (4 over-limit, 3 duplicate pairs, 5 weekend, 3 off-hours, 2 missing receipt), placeholder receipt images | 2h | `npm run dev` shows raw claim list from DB |
+| S1 | Mon midday to PM | Module A: rules engine + `rules.config` + tests that assert every planted problem is caught and clean claims stay Low | 2.5h | Tests pass on seed data |
+| S2 | Mon PM to evening | Module B part 1: risk-sorted queue, filters, claim detail split view with rule reasons | 2.5h | Auditor can find and open any flagged claim in 2 clicks |
+| S3 | Tue AM | Module B part 2: approve/reject with standard reasons, CSV export, batch approve Low | 2h | Exported CSV opens cleanly in Excel, batch approve works |
+| S4 | Tue midday | Settings screen for rules config (limits, hours) instead of raw JSON edit | 1.5h | Finance-facing user can change a limit and see it apply without touching code |
+| S5 | Tue PM | Demo harness: submit form (engine runs live), role switcher, MOCK labels everywhere, reset button | 1.5h | A weekend over-limit claim submitted live shows as High with 2 reasons |
+| S6 | Tue evening | Buffer for slippage from S0 to S5; if no slippage, polish (loading states, empty states, error messages) | 1.5h | No open bugs from earlier stages |
+| S7 | Wed early | Demo script, 2 rehearsals, fix only demo-breaking bugs, record a backup screen video | 2h | Full run in under 10 min, backup video saved |
 
 ### 4.3 Cut order if behind (cut from the top)
 
-1. Batch approve Low risk
-2. Settings screen for rules (keep config file only; show it in the editor)
-3. Split view with receipt image (show text fields only)
-4. CSV export
-5. Live submit form (fall back to seed data only)
+1. Polish (S6)
+2. Settings screen (S4) — fall back to editable config file shown in the code editor
+3. Batch approve Low risk
+4. Split view with receipt image (show text fields only)
+5. CSV export
+6. Live submit form (fall back to seed data only)
 
 Never cut: engine + reasons + risk-sorted queue + claim detail. That is the demo.
 
-**Hard stop:** no new features after Tue 24:00. Wednesday morning is rehearsal only.
+**Hard stop:** no new features after Tue 23:00. Wednesday morning is rehearsal only.
 
 ---
 
@@ -194,7 +197,7 @@ Total 0 = Low, 1 to 2 = Medium, 3 or more = High. Flags mark a claim for review;
 
 | ID | Question | Owner | Blocks Wed? |
 |---|---|---|---|
-| OQ-00 | How many hours can Farrel actually build Mon and Tue (day job, leave)? | Farrel | **Yes**, milestones depend on it |
+| ~~OQ-00~~ | ~~How many hours can Farrel actually build Mon and Tue?~~ **Answered:** day job is low effort, projects infrequent — daytime hours usable both days, ~15h total to Wed AM. | Farrel | Closed |
 | OQ-01 | Demo time, format (in person or online), and who attends | Farrel to ask financial lead | **Yes**, sets the last build cutoff |
 | OQ-02 | What exactly was agreed for Wednesday: a look-and-feel check, or a go/no-go on Phase 1? | Farrel to confirm with financial lead | **Yes**, sets what "success" means in the room |
 | OQ-03 | Can Ruangguru share 1 to 2 real reimbursement policy points (e.g. meal limit) before Wed, to make the config feel real? | Financial lead | No, placeholders work. Nice to have. |
@@ -213,7 +216,7 @@ Total 0 = Low, 1 to 2 = Medium, 3 or more = High. Flags mark a claim for review;
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Not enough build hours (day job) | High | High | 11h plan, strict cut order, feature freeze Tue 24:00 |
+| Not enough build hours | Low (revised down after OQ-00 answered — ~15h available, day job is low effort) | High | Stage plan sized to 15h with buffer stage (S6), strict cut order, feature freeze Tue 23:00 |
 | Scope creep during the build ("just add manager approval") | Medium | High | Any addition goes through this plan as a decision log row first. Default answer before Wed: no. |
 | Demo breaks live | Medium | High | Run locally, reset button, rehearse twice, backup video |
 | Audience thinks the whole system is done | Medium | High | MOCK labels on screen, one opening slide or sentence on "what is real today", Thread 01 handout |
@@ -229,6 +232,7 @@ Total 0 = Low, 1 to 2 = Medium, 3 or more = High. Flags mark a claim for review;
 | Date | Decision | Reason | Who decided |
 |---|---|---|---|
 | 2026-09-28 | Demo scope: working prototype, narrow. Real logic for 1 to 2 modules, rest mocked and labeled. | 2 days to demo | Farrel (pre-plan) |
+| 2026-09-28 | Build budget revised from ~11h to ~15h; settings screen and batch approve moved from stretch into base plan; feature freeze moved to Tue 23:00 | OQ-00 answered: day job is low effort, projects infrequent, daytime hours usable | Farrel |
 | 2026-09-28 | Real modules: A (rules and audit engine) + B (thin Finance audit dashboard). | The audience is Finance. The engine is the value; the queue is how Finance sees it. Either alone does not demo: the engine has no screen, the dashboard with no engine is a pretty table. | Thread 00, pending Farrel review |
 | 2026-09-28 | Manager approval, employee app, notifications, auth fully mocked for Wed. | They show workflow, not audit value, and each costs hours we do not have. | Thread 00, pending Farrel review |
 | 2026-09-28 | Stack: Next.js + TS + Tailwind + shadcn/ui + SQLite, run locally. | Fastest path on familiar tools, no infra risk on demo day. | Thread 00, pending Farrel review |

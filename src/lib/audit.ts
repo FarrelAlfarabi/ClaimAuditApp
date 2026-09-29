@@ -1,6 +1,6 @@
 import { listClaims, type ClaimRow } from "./db";
 import { auditAll, type AuditResult, type RiskLevel } from "./rules/engine";
-import { rulesConfig } from "./rules/config";
+import { getEffectiveConfig } from "./settings";
 
 export type AuditedClaim = ClaimRow & AuditResult;
 
@@ -9,7 +9,7 @@ export const RISK_ORDER: Record<RiskLevel, number> = { High: 0, Medium: 1, Low: 
 /** All claims with engine results: undecided first, then riskiest (score desc), then oldest id. */
 export function getAuditedClaims(): AuditedClaim[] {
   const rows = listClaims();
-  const results = auditAll(rows, rulesConfig);
+  const results = auditAll(rows, getEffectiveConfig());
   return rows
     .map((r, i) => ({ ...r, ...results[i] }))
     .sort(

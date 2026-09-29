@@ -37,6 +37,10 @@ CREATE TABLE claims (
   audit_note TEXT,
   audited_at TEXT
 );
+CREATE TABLE settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL                 -- JSON
+);
 `;
 
 export type ClaimRow = {
@@ -101,4 +105,18 @@ export function approveMany(ids: number[]) {
   const db = getDb();
   const stmt = db.prepare("UPDATE claims SET audit_status = 'approved', audited_at = ? WHERE id = ? AND audit_status = 'pending'");
   return db.transaction(() => ids.reduce((n, id) => n + stmt.run(now(), id).changes, 0))();
+}
+
+export function getSetting<T>(key: string): T | undefined {
+  const row = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined;
+  return row ? (JSON.parse(row.value) as T) : undefined;
+}
+
+export function putSetting(key: string, value: unknown) {
+  getDb().prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+    .run(key, JSON.stringify(value));
+}
+
+export function deleteSetting(key: string) {
+  getDb().prepare("DELETE FROM settings WHERE key = ?").run(key);
 }

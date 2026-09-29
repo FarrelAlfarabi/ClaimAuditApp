@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { href: "/", label: "Queue", match: (p: string) => p === "/" || /^\/claims\/\d+/.test(p) },
   { href: "/claims", label: "All claims", match: (p: string) => p === "/claims" },
+  { href: "/settings", label: "Rules", match: (p: string) => p === "/settings" },
 ];
 
 /** Phone-first shell: sticky top bar + bottom tabs. On wide screens content stays centered. */
@@ -24,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
       <main className="mx-auto max-w-5xl px-4 pt-4 pb-24">{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-5xl grid-cols-2">
+        <div className="mx-auto grid max-w-5xl grid-cols-3">
           {tabs.map((t) => (
             <Link
               key={t.href}

@@ -112,3 +112,20 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 
 **Risks / discrepancies vs. master-plan.md v2.2**
 - Vercel writes are temporary: approvals live in `/tmp` of one server instance and vanish when it sleeps (roughly minutes idle) or when a different instance answers. Someone clicking around the Vercel link may see decisions "disappear". Fine as a preview; not a demo machine. Plan 5.1 still says no Vercel deploy; the plan should record the preview.
+
+## 2026-09-29 | S4 | 100% of S4 (S0 to S4 about 11h of the 14h build plan by estimate) | No blocker | Wed demo time still unknown (OQ-01)
+
+**What changed and why**
+- New "Rules" tab (`/settings`): Finance edits category limits, the near-limit %, and working hours on the phone. Amounts show with Indonesian thousand separators and a number keypad; hours use the phone's time picker.
+- Saved changes go into a `settings` table in the DB and are laid over `config/rules.config.json`. The engine reads the combined rules on every page load, so a change hits the queue at once, with no restart and no code change. "Reset to defaults" removes the override.
+- Validation runs on the server (source of truth): limits Rp 1.000 to Rp 1.000.000.000 whole numbers, near-limit 50 to 100%, HH:MM times, end after start. Errors show under each field and are linked for screen readers.
+- The All claims page now shows the rules actually in force (was: file values only).
+
+**Verified (Playwright, 390x844)**
+- Empty Meals limit + end 06:00 is refused with two field errors; nothing saved.
+- Meals limit Rp 100.000: queue goes from 10 High / 10 Medium / 60 Low to 26 / 11 / 43. Meets "a limit changed on the phone changes a claim's risk without touching code".
+- Reset returns to 10 / 10 / 60. 16/16 engine tests still pass.
+
+**Decisions**
+- Score weights and risk bands are not editable on screen (plan S4 lists limits and hours only). They stay in the file.
+- Re-seeding (`npm run dev`) clears Settings changes along with everything else.

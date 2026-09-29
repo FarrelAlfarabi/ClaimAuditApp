@@ -1,5 +1,5 @@
 import { listClaims } from "@/lib/db";
-import config from "../../../config/rules.config.json";
+import { getEffectiveConfig } from "@/lib/settings";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -11,6 +11,7 @@ const idr = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
 export default function Home() {
   const claims = listClaims();
+  const config = getEffectiveConfig();
 
   return (
     <div className="space-y-4">

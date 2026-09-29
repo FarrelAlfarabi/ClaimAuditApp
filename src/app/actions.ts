@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { approveMany, setAuditDecision, undoAuditDecision } from "@/lib/db";
 import { getAuditedClaims } from "@/lib/audit";
 import { rejectionReasons } from "@/lib/rules/config";
+import { resetRules, saveRules, validateRules, type EditableRules } from "@/lib/settings";
 
 function refresh(id?: number) {
   revalidatePath("/");
@@ -33,4 +34,21 @@ export async function batchApproveLow() {
   const n = approveMany(ids);
   refresh();
   return n;
+}
+
+export type SaveRulesResult = { ok: true } | { ok: false; errors: Record<string, string> };
+
+export async function saveRulesAction(r: EditableRules): Promise<SaveRulesResult> {
+  const errors = validateRules(r);
+  if (errors) return { ok: false, errors };
+  saveRules(r);
+  refresh();
+  revalidatePath("/settings");
+  return { ok: true };
+}
+
+export async function resetRulesAction() {
+  resetRules();
+  refresh();
+  revalidatePath("/settings");
 }

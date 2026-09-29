@@ -9,7 +9,6 @@ export const PREVIEWS: Preview[] = [
   { slug: "notifications", title: "Notifications", who: "Employee", phase: "Phase 1", blurb: "Email alerts when a claim needs approval, is approved, rejected or paid." },
   { slug: "audit-trail", title: "Audit trail", who: "Finance", phase: "Phase 1", blurb: "Every decision and rule change, with who and when, that nobody can edit." },
   { slug: "users-admin", title: "Users and org import", who: "Admin", phase: "Phase 1", blurb: "Add people, set roles and managers, import the org chart from a spreadsheet." },
-  { slug: "ocr", title: "Receipt reading (OCR)", who: "Employee", phase: "Phase 2", blurb: "The app reads amount, date and merchant from the receipt photo." },
   { slug: "hris-sync", title: "HRIS / payroll sync", who: "Admin", phase: "Phase 2", blurb: "Org data comes in, approved claims go out to payroll automatically." },
   { slug: "analytics", title: "Spend analytics", who: "Finance", phase: "Phase 2", blurb: "Spend by category and department, trends, and audit turnaround time." },
 ];

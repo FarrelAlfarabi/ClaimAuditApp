@@ -123,23 +123,6 @@ function UsersAdmin() {
   );
 }
 
-function Ocr() {
-  return (
-    <div className="space-y-3">
-      <Card>
-        <div className="flex h-32 items-center justify-center rounded-lg bg-muted text-sm text-muted-foreground">[ receipt photo ]</div>
-        <div className="mt-3 text-sm font-semibold">Read from the receipt</div>
-        <Row k="Merchant" v={<>Sate Khas Senayan <Pill tone="green">98%</Pill></>} />
-        <Row k="Amount" v={<>Rp 450.000 <Pill tone="green">99%</Pill></>} />
-        <Row k="Date" v={<>26 Sep 2026 <Pill tone="green">97%</Pill></>} />
-        <Row k="Time" v={<>21:47 <Pill tone="amber">71%, please check</Pill></>} />
-      </Card>
-      <FakeButton primary>Use these values</FakeButton>
-      <p className="text-xs text-muted-foreground">With the time read from the receipt, the off-hours check works on every claim (today it only works if the employee types the time).</p>
-    </div>
-  );
-}
-
 function HrisSync() {
   return (
     <div className="space-y-3">
@@ -182,7 +165,7 @@ function Analytics() {
 
 const BODIES: Record<string, () => React.ReactNode> = {
   "manager-approval": ManagerApproval, escalation: Escalation, "status-tracker": StatusTracker, "budget-warning": BudgetWarning,
-  notifications: Notifications, "audit-trail": AuditTrail, "users-admin": UsersAdmin, ocr: Ocr, "hris-sync": HrisSync, analytics: Analytics,
+  notifications: Notifications, "audit-trail": AuditTrail, "users-admin": UsersAdmin, "hris-sync": HrisSync, analytics: Analytics,
 };
 
 export default async function PreviewPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -3,11 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const DB_PATH = path.join(process.cwd(), "data", "claims.db");
+/** Pristine copy written by the seed script; "Reset demo data" restores from it. */
+export const SEED_DB_PATH = path.join(process.cwd(), "data", "claims.seed.db");
 
 // Vercel's bundle is read-only. There we copy the build-time seeded DB to /tmp and write to the copy.
 // Writes then last only as long as that server instance (minutes), and are not shared between instances.
 // The real demo runs locally (master-plan 5.1), where writes persist in data/claims.db.
 const RUNTIME_DB_PATH = process.env.VERCEL ? "/tmp/claims.db" : DB_PATH;
+/** Uploaded receipts (demo only; no retention policy). Served by /api/receipts/[name]. */
+export const UPLOAD_DIR = process.env.VERCEL ? "/tmp/uploads" : path.join(process.cwd(), "data", "uploads");
 
 export const SCHEMA = `
 CREATE TABLE departments (
@@ -30,8 +34,10 @@ CREATE TABLE claims (
   transaction_time TEXT,              -- HH:MM, optional (A-04)
   description TEXT NOT NULL,
   receipt_path TEXT,                  -- NULL = no receipt attached
+  receipt_hash TEXT,                  -- sha256 of an uploaded file; NULL for seed placeholders
   manager_status TEXT NOT NULL,       -- MOCK: always 'approved' in seed data
   submitted_at TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'seed',            -- seed | demo (submitted through the demo form)
   audit_status TEXT NOT NULL DEFAULT 'pending',  -- Finance decision: pending | approved | rejected
   audit_reason TEXT,                             -- standard rejection reason (rules.config.json)
   audit_note TEXT,
@@ -54,7 +60,9 @@ export type ClaimRow = {
   transaction_time: string | null;
   description: string;
   receipt_path: string | null;
+  receipt_hash: string | null;
   manager_status: string;
+  source: "seed" | "demo";
   audit_status: AuditStatus;
   audit_reason: string | null;
   audit_note: string | null;
@@ -77,7 +85,7 @@ export function listClaims(): ClaimRow[] {
   return getDb()
     .prepare(
       `SELECT c.id, e.name AS employee_name, d.name AS department_name, c.category, c.merchant,
-              c.amount, c.transaction_date, c.transaction_time, c.description, c.receipt_path, c.manager_status,
+              c.amount, c.transaction_date, c.transaction_time, c.description, c.receipt_path, c.receipt_hash, c.manager_status, c.source,
               c.audit_status, c.audit_reason, c.audit_note, c.audited_at
        FROM claims c
        JOIN employees e ON e.id = c.employee_id
@@ -119,4 +127,41 @@ export function putSetting(key: string, value: unknown) {
 
 export function deleteSetting(key: string) {
   getDb().prepare("DELETE FROM settings WHERE key = ?").run(key);
+}
+
+export type Employee = { id: number; name: string; department_name: string };
+
+export function listEmployees(): Employee[] {
+  return getDb()
+    .prepare("SELECT e.id, e.name, d.name AS department_name FROM employees e JOIN departments d ON d.id = e.department_id ORDER BY e.name")
+    .all() as Employee[];
+}
+
+export type NewClaim = {
+  employee_id: number; category: string; merchant: string; amount: number; transaction_date: string;
+  transaction_time: string | null; description: string; receipt_path: string | null; receipt_hash: string | null;
+};
+
+export function insertClaim(c: NewClaim): number {
+  const r = getDb()
+    .prepare(`INSERT INTO claims (employee_id, category, merchant, amount, transaction_date, transaction_time, description,
+        receipt_path, receipt_hash, manager_status, submitted_at, source)
+      VALUES (@employee_id, @category, @merchant, @amount, @transaction_date, @transaction_time, @description,
+        @receipt_path, @receipt_hash, 'approved', @submitted_at, 'demo')`)
+    .run({ ...c, submitted_at: now() });
+  return Number(r.lastInsertRowid);
+}
+
+/** Restores seed claims and clears Settings changes and uploads. Keeps the open connection (no file swap). */
+export function resetDemoData() {
+  const db = getDb();
+  db.prepare("ATTACH DATABASE ? AS seed").run(SEED_DB_PATH);
+  try {
+    db.transaction(() => {
+      db.exec("DELETE FROM claims; INSERT INTO claims SELECT * FROM seed.claims; DELETE FROM settings;");
+    })();
+  } finally {
+    db.exec("DETACH DATABASE seed");
+  }
+  fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
 }

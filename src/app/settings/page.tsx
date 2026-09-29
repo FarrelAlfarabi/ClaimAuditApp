@@ -1,5 +1,6 @@
 import { getEffectiveConfig, isCustomized } from "@/lib/settings";
 import { RulesForm } from "@/components/rules-form";
+import { ResetDemo } from "@/components/reset-demo";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default function SettingsPage() {
         initial={{ categoryLimits: c.categoryLimits, nearLimitPct: c.nearLimitPct, workingHours: c.workingHours }}
         customized={isCustomized()}
       />
+      <ResetDemo />
     </div>
   );
 }

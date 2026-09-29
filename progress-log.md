@@ -129,3 +129,32 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 **Decisions**
 - Score weights and risk bands are not editable on screen (plan S4 lists limits and hours only). They stay in the file.
 - Re-seeding (`npm run dev`) clears Settings changes along with everything else.
+
+## 2026-09-29 | S5 | Code 100%; hotspot + mirroring test 0% (needs Farrel's phone) | Blocker for full S5: OQ-23 (which phone, how mirrored) | Wed demo time still unknown (OQ-01)
+
+**What changed and why**
+- Role switcher (Employee / Finance) in the top bar instead of login. Stored in a cookie; each role gets its own bottom tabs (Employee: Submit, My claims. Finance: Queue, All claims, Rules).
+- Submit form (`/submit`): MOCK employee picker, category, merchant, amount (grouped, number keypad), date (defaults to today in Jakarta time, no future dates), optional time (hint: needed for the off-hours check), optional description, receipt photo from camera or gallery with preview, change and remove.
+- Photos are shrunk on the phone to max 1600px JPEG before upload (a 650 KB 3000x4000 test photo became 75 KB). Keeps uploads fast over a phone hotspot.
+- Server checks every field (source of truth) and returns errors per field. Files: images only, max 8 MB, saved under their SHA-256 name so an identical photo triggers the engine's file-hash duplicate rule (S1 rule, now live).
+- After submitting: a result screen with the engine's risk and every reason (the demo's "live" moment), then Submit another / My claims.
+- "Reset demo data" (Rules tab, with confirm): restores the 80 seed claims, clears decisions, demo submissions, uploads and rule changes, without restarting the server.
+- Uploaded receipts are served by `/api/receipts/[name]`, which only accepts our own generated file names (no path tricks).
+- MOCK labels: top bar "DEMO · MOCK DATA" on every screen, "(MOCK employee)" on the picker, placeholder receipts labeled, uploaded ones labeled "uploaded in demo".
+
+**Bugs found and fixed in this stage**
+- Vercel bundle only included the DB for the `/` route (`outputFileTracingIncludes` key `/`). Detail, export and other routes would likely have crashed on Vercel. Now `/**`.
+- Receipt viewer showed an empty box while an image loaded slowly, and could stay hidden if the image loaded before the page became interactive. Now: loading text, error text, and a check on mount.
+
+**Verified (Playwright, 390x844)**
+- Empty submit: 3 field errors (category, merchant, amount), nothing saved.
+- Meals, Rp 450.000, Sat 26 Sep, with photo: result High with exactly 2 reasons (over limit, Saturday). Meets S5 "done when" on emulated phone size.
+- Same photo on a second, different claim: flagged "identical receipt file as claim #81".
+- Switch to Finance: the new claim is the top card in the queue; its receipt loads and zooms.
+- Reset: back to 80 claims, uploads folder emptied. 16/16 engine tests pass.
+
+**Not verified / open**
+- Real phone over the phone's hotspot, and mirroring to the laptop (plan S5). Cannot be done from here. Farrel must test: laptop joins phone hotspot, run `npm run dev`, open `http://<laptop-ip>:3000` on the phone.
+- iPhone HEIC photos: Safari normally converts to JPEG when uploading; if not, the server rejects with a clear message. Untested on a real iPhone.
+- One 500 error ("Unexpected end of JSON input") appeared once on the result page during a dev-server recompile; the same page then loaded fine 4 times. To be re-checked on a production build in S6.
+- My claims shows all demo submissions (no login), labeled "Submitted in this demo".

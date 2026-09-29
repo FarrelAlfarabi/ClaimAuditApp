@@ -13,7 +13,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import { DB_PATH, SCHEMA } from "../src/lib/db";
+import { DB_PATH, SCHEMA, SEED_DB_PATH, UPLOAD_DIR } from "../src/lib/db";
 import config from "../config/rules.config.json";
 
 type Category = keyof typeof config.categoryLimits;
@@ -170,6 +170,8 @@ db.transaction(() => {
   });
 })();
 db.close();
+fs.copyFileSync(DB_PATH, SEED_DB_PATH);
+fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
 
 fs.mkdirSync("tests/fixtures", { recursive: true });
 fs.writeFileSync("tests/fixtures/seed-expected.json", JSON.stringify(expected, null, 2) + "\n");

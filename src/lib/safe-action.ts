@@ -1,5 +1,13 @@
-/** Message shown when a server call fails (usually the phone lost the hotspot/Wi-Fi). */
-export const NETWORK_ERROR = "Could not save. Check the connection and try again; if it keeps failing, sign in again. Nothing was saved.";
+import { dictFor, isLang } from "./i18n/dict";
+
+/** Message shown when a server call fails (usually the phone lost the hotspot/Wi-Fi). English by default. */
+export const NETWORK_ERROR = dictFor("en").err.network;
+
+/** The page language (set by the root layout), so this works from any client component without a hook. */
+const networkError = () => {
+  const l = typeof document !== "undefined" ? document.documentElement.lang : "en";
+  return dictFor(isLang(l) ? l : "en").err.network;
+};
 
 /**
  * Runs a server action from the client without letting a network failure crash the page.
@@ -9,7 +17,7 @@ export async function safe<T>(fn: () => Promise<T>, onError: (msg: string) => vo
   try {
     return await fn();
   } catch {
-    onError(NETWORK_ERROR);
+    onError(networkError());
     return undefined;
   }
 }

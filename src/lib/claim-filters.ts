@@ -1,5 +1,9 @@
 import type { AuditedClaim } from "./audit";
 import type { RuleId } from "./rules/engine";
+import { dictFor } from "./i18n/dict";
+import { reasonText } from "./i18n/reasons";
+
+const ID = dictFor("id");
 
 /** Every filter lives in the URL (?q=…&risk=…), so a filtered view can be reloaded, shared or bookmarked. */
 export type Filters = {
@@ -60,7 +64,9 @@ function matchesText(c: AuditedClaim, q: string) {
   if (!words.length) return true;
   const hay = norm(
     [`#${c.id}`, String(c.id), c.employee_name, c.merchant, c.category, c.department_name, c.description,
-      String(c.amount), c.transaction_date, ...c.hits.map((h) => `${FLAG_LABELS[h.rule]} ${h.reason}`), c.audit_reason ?? ""].join(" ")
+      String(c.amount), c.transaction_date, ...c.hits.map((h) => `${FLAG_LABELS[h.rule]} ${h.reason}`), c.audit_reason ?? "",
+      // Indonesian words too, so search works in either UI language ("makan", "akhir pekan")
+      ID.category[c.category] ?? "", ...c.hits.map((h) => `${ID.flag[h.rule]} ${reasonText(h, ID)}`), ID.rejectReason[c.audit_reason ?? ""] ?? ""].join(" ")
   );
   return words.every((w) => hay.includes(w)); // every word must appear somewhere ("gramedia 301" works)
 }

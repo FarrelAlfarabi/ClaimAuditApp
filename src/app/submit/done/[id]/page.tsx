@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuditedClaims } from "@/lib/audit";
-import { idr } from "@/lib/format";
+import { idr, fmtDate } from "@/lib/format";
+import { getDict } from "@/lib/i18n/server";
+import { reasonText } from "@/lib/i18n/reasons";
 import { RiskBadge } from "@/components/risk-badge";
+import { IconCheck } from "@/components/icons";
 import { requirePageRole } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
@@ -10,32 +13,39 @@ export const dynamic = "force-dynamic";
 /** Shown right after a submit: what the engine decided, live. */
 export default async function Done({ params }: { params: Promise<{ id: string }> }) {
   const me = await requirePageRole("employee");
+  const t = await getDict();
   const id = Number((await params).id);
   const c = getAuditedClaims().find((x) => x.id === id);
   if (!c || c.source !== "demo" || (me.employeeId && c.employee_id !== me.employeeId)) notFound();
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border bg-background p-5 text-center">
-        <div className="text-sm text-muted-foreground">Claim #{c.id} submitted · {idr(c.amount)}</div>
-        <div className="mt-3 text-sm">Audit engine result</div>
-        <RiskBadge risk={c.risk} className="mt-2 px-6 py-2 text-2xl" />
-      </div>
-      <section className="rounded-xl border bg-background p-4">
-        <h2 className="mb-2 text-sm font-semibold">
-          {c.hits.length ? `${c.hits.length} reason${c.hits.length > 1 ? "s" : ""} Finance will see` : "No flags. Goes to the Low-risk pile."}
-        </h2>
-        <ul className="space-y-2">
-          {c.hits.map((h) => (
-            <li key={h.rule} className="flex gap-3 text-sm">
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-medium">+{h.points}</span>
-              <span>{h.reason}</span>
-            </li>
-          ))}
-        </ul>
+    <div className="mx-auto max-w-xl space-y-4">
+      <section className="card relative flex flex-col items-center gap-3 overflow-hidden px-5 py-6 text-center">
+        <div className="absolute -top-8 -left-8 h-28 w-28 rounded-full bg-accent-soft" aria-hidden />
+        <div className="relative flex h-[60px] w-[60px] items-center justify-center rounded-[20px] bg-primary text-primary-foreground shadow-[0_4px_0_var(--accent)]">
+          <IconCheck size={30} strokeWidth={2.6} />
+        </div>
+        <h1 className="relative text-2xl font-extrabold tracking-tight">{t.done.submitted(c.id)}</h1>
+        <div className="text-sm text-muted-foreground">{c.merchant} · <span className="num">{idr(c.amount)}</span> · {fmtDate(c.transaction_date, t, false)}</div>
+        <div className="eyebrow mt-1">{t.done.engine}</div>
+        <RiskBadge risk={c.risk} size="lg" />
+        {c.hits.length > 0 && <p className="text-[13px] text-muted-foreground">{t.done.flagNote}</p>}
       </section>
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/submit" className="flex h-12 items-center justify-center rounded-xl border text-sm font-medium">Submit another</Link>
-        <Link href="/my" className="flex h-12 items-center justify-center rounded-xl bg-foreground text-sm font-medium text-background">My claims</Link>
+      <section className="card space-y-3 p-4">
+        <h2 className="text-lg font-extrabold">{c.hits.length ? t.done.reasons(c.hits.length) : t.done.noFlags}</h2>
+        {c.hits.length > 0 && (
+          <ul className="space-y-2.5">
+            {c.hits.map((h) => (
+              <li key={h.rule} className="flex items-start gap-3">
+                <span className="points">+{h.points}</span>
+                <span className="pt-1 text-[15px] leading-snug">{reasonText(h, t)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link href="/submit" className="btn btn-primary">{t.done.another}</Link>
+        <Link href="/my" className="btn btn-secondary">{t.nav.myClaims}</Link>
       </div>
     </div>
   );

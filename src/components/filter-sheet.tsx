@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FLAG_LABELS, SORTS, activeCount, type Filters } from "@/lib/claim-filters";
+import { SORTS, activeCount, type Filters } from "@/lib/claim-filters";
 import { filterHref } from "@/lib/filter-url";
+import { catLabel } from "@/lib/i18n/dict";
+import { IconCheck, IconFilter, IconX } from "@/components/icons";
+import { useT } from "@/components/i18n-provider";
 
 export type { Filters };
 
@@ -19,23 +22,24 @@ type Options = {
   sort?: boolean;
 };
 
-const STATUS_LABEL: Record<string, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
-
-function Chips({ label, name, values, value, onPick, labels }: {
+function Chips({ label, name, values, value, onPick, labels, allLabel }: {
   label: string; name: keyof Filters; values: string[]; value?: string; onPick: (k: keyof Filters, v?: string) => void;
-  labels?: Record<string, string>;
+  labels?: Record<string, string>; allLabel: string;
 }) {
-  const base = "min-h-11 rounded-full border px-4 py-2 text-sm";
+  const chip = (v: string | undefined, text: string) => {
+    const on = value === v;
+    return (
+      <button key={v ?? "_all"} type="button" onClick={() => onPick(name, v)} aria-pressed={on} className="chip">
+        {on && <IconCheck size={16} strokeWidth={2.6} />}{text}
+      </button>
+    );
+  };
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">{label}</legend>
+    <fieldset className="space-y-2.5">
+      <legend className="mb-2.5 text-[15px] font-extrabold">{label}</legend>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => onPick(name, undefined)}
-          aria-pressed={!value} className={`${base} ${!value ? "bg-foreground text-background" : "bg-background"}`}>All</button>
-        {values.map((v) => (
-          <button key={v} type="button" onClick={() => onPick(name, v)}
-            aria-pressed={value === v} className={`${base} ${value === v ? "bg-foreground text-background" : "bg-background"}`}>{labels?.[v] ?? v}</button>
-        ))}
+        {chip(undefined, allLabel)}
+        {values.map((v) => chip(v, labels?.[v] ?? v))}
       </div>
     </fieldset>
   );
@@ -46,6 +50,7 @@ function Chips({ label, name, values, value, onPick, labels }: {
  * Each screen turns on only the sections that make sense for it (options).
  */
 export function FilterSheet({ basePath = "/", options, current }: { basePath?: string; options: Options; current: Filters }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Filters>(current);
   const [err, setErr] = useState<string>();
@@ -76,57 +81,70 @@ export function FilterSheet({ basePath = "/", options, current }: { basePath?: s
   const pick = (k: keyof Filters, v?: string) => setDraft((d) => ({ ...d, [k]: v }));
   const apply = (f: Filters) => {
     const min = f.min ? Number(f.min) : undefined, max = f.max ? Number(f.max) : undefined;
-    if (min !== undefined && max !== undefined && min > max) return setErr("Minimum amount is higher than maximum.");
-    if (f.from && f.to && f.from > f.to) return setErr("Start date is after end date.");
+    if (min !== undefined && max !== undefined && min > max) return setErr(t.filters.errMinMax);
+    if (f.from && f.to && f.from > f.to) return setErr(t.filters.errDates);
     setErr(undefined);
     router.push(filterHref(basePath, { q: current.q, ...f }), { scroll: false });
     setOpen(false);
   };
-  const input = "h-12 w-full rounded-xl border bg-background px-3 text-base";
   const digits = (s: string) => s.replace(/\D/g, "").slice(0, 10);
+  const small = "mb-1.5 block text-[13px] font-bold text-ink-2";
 
   return (
     <>
-      <button ref={opener} type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => { setDraft(current); setErr(undefined); setOpen(true); }}
-        className="h-11 shrink-0 rounded-full border bg-background px-4 text-sm font-medium">
-        Filters{active ? ` (${active})` : ""}
+      <button ref={opener} type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={t.filters.buttonAria(active)}
+        onClick={() => { setDraft(current); setErr(undefined); setOpen(true); }} className="btn btn-secondary btn-sm">
+        <IconFilter />{t.filters.button}
+        {active > 0 && <span className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-primary px-1.5 text-xs font-extrabold text-primary-foreground">{active}</span>}
       </button>
       {open && (
-        <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={() => setOpen(false)}>
-          <div ref={sheet} role="dialog" aria-modal="true" aria-labelledby="filter-title" className="max-h-[85dvh] w-full max-w-lg space-y-5 overflow-y-auto rounded-t-2xl bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+        <div className="fixed inset-0 z-30 flex items-end justify-center bg-[var(--scrim)] md:items-center" onClick={() => setOpen(false)}>
+          <div ref={sheet} role="dialog" aria-modal="true" aria-labelledby="filter-title"
+            className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-3xl bg-card shadow-[var(--shadow-sheet)] md:rounded-3xl"
             onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto h-1.5 w-10 rounded-full bg-muted-foreground/30" aria-hidden />
-            <h2 id="filter-title" className="text-base font-semibold">Filter and sort</h2>
-            {options.sort && <Chips label="Sort by" name="sort" values={Object.keys(SORTS)} labels={SORTS} value={draft.sort} onPick={pick} />}
-            {options.risk && <Chips label="Risk" name="risk" values={["High", "Medium", "Low"]} value={draft.risk} onPick={pick} />}
-            {options.flags && <Chips label="Flag" name="flag" values={Object.keys(FLAG_LABELS)} labels={FLAG_LABELS} value={draft.flag} onPick={pick} />}
-            {options.statuses && <Chips label="Audit status" name="status" values={options.statuses} labels={STATUS_LABEL} value={draft.status} onPick={pick} />}
-            {options.categories && <Chips label="Category" name="category" values={options.categories} value={draft.category} onPick={pick} />}
-            {options.departments && <Chips label="Department (MOCK)" name="dept" values={options.departments} value={draft.dept} onPick={pick} />}
-            {options.receipt && <Chips label="Receipt" name="receipt" values={["with", "without"]} labels={{ with: "Has receipt", without: "No receipt" }} value={draft.receipt} onPick={pick} />}
-            {options.dates && (
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">Transaction date</legend>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-xs text-muted-foreground">From<input type="date" value={draft.from ?? ""} onChange={(e) => pick("from", e.target.value || undefined)} className={input} /></label>
-                  <label className="text-xs text-muted-foreground">To<input type="date" value={draft.to ?? ""} onChange={(e) => pick("to", e.target.value || undefined)} className={input} /></label>
-                </div>
-              </fieldset>
-            )}
-            {options.amounts && (
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">Amount (Rp)</legend>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-xs text-muted-foreground">Min<input inputMode="numeric" value={draft.min ? Number(draft.min).toLocaleString("id-ID") : ""} onChange={(e) => pick("min", digits(e.target.value) || undefined)} className={input} /></label>
-                  <label className="text-xs text-muted-foreground">Max<input inputMode="numeric" value={draft.max ? Number(draft.max).toLocaleString("id-ID") : ""} onChange={(e) => pick("max", digits(e.target.value) || undefined)} className={input} /></label>
-                </div>
-              </fieldset>
-            )}
-            {err && <p role="alert" className="text-sm text-red-700">{err}</p>}
-            <div className="sticky bottom-0 grid grid-cols-2 gap-3 bg-background pt-2">
-              <button type="button" onClick={() => apply({})} className="h-12 rounded-xl border text-sm font-medium">Clear</button>
-              <button type="button" onClick={() => apply(draft)}
-                className="h-12 rounded-xl bg-foreground text-sm font-medium text-background">Show results</button>
+            <div className="border-b px-4 pt-2.5 pb-2">
+              <div className="mx-auto mb-1.5 h-[5px] w-11 rounded-full bg-border-strong" aria-hidden />
+              <div className="flex items-center justify-between">
+                <h2 id="filter-title" className="text-[22px] font-extrabold tracking-tight">{t.filters.title}</h2>
+                <button type="button" onClick={() => setOpen(false)} aria-label={t.menu.close} className="icon-btn border-0 bg-card-2"><IconX /></button>
+              </div>
+            </div>
+            <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5">
+              {options.sort && <Chips label={t.filters.sortBy} name="sort" values={Object.keys(SORTS)} labels={t.sort} value={draft.sort} onPick={pick} allLabel={t.filters.all} />}
+              {options.risk && <Chips label={t.filters.risk} name="risk" values={["High", "Medium", "Low"]} labels={t.risk} value={draft.risk} onPick={pick} allLabel={t.filters.all} />}
+              {options.flags && <Chips label={t.filters.flag} name="flag" values={Object.keys(t.flag)} labels={t.flag} value={draft.flag} onPick={pick} allLabel={t.filters.all} />}
+              {options.statuses && <Chips label={t.filters.status} name="status" values={options.statuses} labels={t.status} value={draft.status} onPick={pick} allLabel={t.filters.all} />}
+              {options.categories && <Chips label={t.filters.category} name="category" values={options.categories}
+                labels={Object.fromEntries(options.categories.map((c) => [c, catLabel(t, c)]))} value={draft.category} onPick={pick} allLabel={t.filters.all} />}
+              {options.departments && <Chips label={t.filters.dept} name="dept" values={options.departments} value={draft.dept} onPick={pick} allLabel={t.filters.all} />}
+              {options.receipt && <Chips label={t.filters.receipt} name="receipt" values={["with", "without"]} labels={{ with: t.filters.hasReceipt, without: t.filters.noReceipt }} value={draft.receipt} onPick={pick} allLabel={t.filters.all} />}
+              {options.dates && (
+                <fieldset>
+                  <legend className="mb-2.5 text-[15px] font-extrabold">{t.filters.date}</legend>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={small}>{t.filters.from}<input type="date" value={draft.from ?? ""} onChange={(e) => pick("from", e.target.value || undefined)} className="input num mt-1.5" /></label>
+                    <label className={small}>{t.filters.to}<input type="date" value={draft.to ?? ""} onChange={(e) => pick("to", e.target.value || undefined)} className="input num mt-1.5" /></label>
+                  </div>
+                </fieldset>
+              )}
+              {options.amounts && (
+                <fieldset>
+                  <legend className="mb-2.5 text-[15px] font-extrabold">{t.filters.amount}</legend>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={small}>{t.filters.min}
+                      <span className="input-prefix mt-1.5 block"><span>Rp</span><input inputMode="numeric" value={draft.min ? Number(draft.min).toLocaleString("id-ID") : ""} onChange={(e) => pick("min", digits(e.target.value) || undefined)} className="input num" /></span>
+                    </label>
+                    <label className={small}>{t.filters.max}
+                      <span className="input-prefix mt-1.5 block"><span>Rp</span><input inputMode="numeric" value={draft.max ? Number(draft.max).toLocaleString("id-ID") : ""} onChange={(e) => pick("max", digits(e.target.value) || undefined)} className="input num" /></span>
+                    </label>
+                  </div>
+                </fieldset>
+              )}
+              {err && <p role="alert" className="field-error">{err}</p>}
+            </div>
+            <div className="grid grid-cols-[1fr_2fr] gap-2.5 border-t bg-card px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <button type="button" onClick={() => apply({})} className="btn btn-secondary">{t.filters.clear}</button>
+              <button type="button" onClick={() => apply(draft)} className="btn btn-primary">{t.filters.show}</button>
             </div>
           </div>
         </div>

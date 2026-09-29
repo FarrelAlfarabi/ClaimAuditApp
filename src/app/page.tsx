@@ -1,28 +1,36 @@
 import Link from "next/link";
 import { getAuditedClaims } from "@/lib/audit";
-import { idr, dayName } from "@/lib/format";
-import { RiskBadge } from "@/components/risk-badge";
 import { FilterSheet } from "@/components/filter-sheet";
 import { SearchBar } from "@/components/search-bar";
 import { ActiveFilters } from "@/components/active-filters";
+import { ClaimCard, EmptyState } from "@/components/claim-card";
+import { IconDownload, RiskBars } from "@/components/icons";
 import { applyFilters, readFilters } from "@/lib/claim-filters";
 import { filterHref } from "@/lib/filter-url";
 import type { RiskLevel } from "@/lib/rules/engine";
-import { StatusChip } from "@/components/status-chip";
 import { BatchApprove } from "@/components/batch-approve";
 import { requirePageRole } from "@/lib/role";
+import { getDict } from "@/lib/i18n/server";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 const uniq = (a: string[]) => [...new Set(a)].sort();
+const TILE: Record<RiskLevel, string> = {
+  High: "border-[var(--risk-high-bd)] text-[var(--risk-high)] aria-[current=true]:bg-[var(--risk-high-bg)] aria-[current=true]:border-[var(--risk-high)]",
+  Medium: "border-[var(--risk-med-bd)] text-[var(--risk-med)] aria-[current=true]:bg-[var(--risk-med-bg)] aria-[current=true]:border-[var(--risk-med)]",
+  Low: "border-[var(--risk-low-bd)] text-[var(--risk-low)] aria-[current=true]:bg-[var(--risk-low-bg)] aria-[current=true]:border-[var(--risk-low)]",
+};
 
 export default async function Queue({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requirePageRole("finance");
+  const t = await getDict();
   const f = readFilters(await searchParams);
   const all = getAuditedClaims();
   const claims = applyFilters(all, f);
   const counts = (["High", "Medium", "Low"] as RiskLevel[]).map((r) => ({ r, n: all.filter((c) => c.risk === r).length }));
   const approved = all.filter((c) => c.audit_status === "approved").length;
+  const pending = all.filter((c) => c.audit_status === "pending").length;
   const options = {
     categories: uniq(all.map((c) => c.category)),
     departments: uniq(all.map((c) => c.department_name)),
@@ -32,74 +40,47 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Re
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">Audit queue</h1>
-        <p className="text-sm text-muted-foreground">Riskiest first. Flags mean review, not reject.</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        {counts.map(({ r, n }) => (
-          <Link key={r} href={filterHref("/", f, { risk: f.risk === r ? undefined : r })} scroll={false} aria-current={f.risk === r ? "true" : undefined}
-            className={`rounded-xl border bg-background p-3 text-center ${f.risk === r ? "ring-2 ring-foreground" : ""}`}>
-            <div className="text-2xl font-bold tabular-nums">{n}</div>
-            <div className="text-xs text-muted-foreground">{r}</div>
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="text-[26px] font-extrabold tracking-tight md:text-3xl">{t.queue.title}</h1>
+            <span className="num text-sm text-muted-foreground md:hidden">{t.queue.pending(pending)}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">{t.queue.sub}</p>
+        </div>
+        <div className="grid w-full grid-cols-3 gap-2.5 md:w-auto md:grid-cols-[repeat(3,140px)]">
+          {counts.map(({ r, n }) => {
+            const on = f.risk === r;
+            return (
+              <Link key={r} href={filterHref("/", f, { risk: on ? undefined : r })} scroll={false} aria-current={on ? "true" : undefined}
+                aria-label={t.queue.tileAria(t.risk[r], n, on)}
+                className={cn("flex min-h-[76px] flex-col gap-0.5 rounded-2xl border-[1.5px] bg-card px-3.5 py-3 no-underline aria-[current=true]:border-2", TILE[r])}>
+                <span className="flex items-center gap-1.5 text-[13px] font-extrabold"><RiskBars risk={r} />{t.risk[r]}</span>
+                <span className="amount text-[28px] leading-tight text-ink">{n}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <BatchApprove count={all.filter((c) => c.risk === "Low" && c.audit_status === "pending").length} />
 
-      <SearchBar placeholder="Search claim #, employee, merchant, reason…" />
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm text-muted-foreground" role="status">{claims.length} of {all.length} claims</span>
-        <div className="flex gap-2">
-          <a href="/api/export" className="flex h-11 items-center rounded-full border bg-background px-4 text-sm font-medium" download>
-            Export CSV ({approved})
-          </a>
+      <div className="flex flex-wrap gap-2.5">
+        <div className="flex w-full min-w-0 md:w-auto md:flex-1"><SearchBar placeholder="finance" /></div>
+        <div className="grid w-full grid-cols-2 gap-2.5 md:flex md:w-auto">
           <FilterSheet basePath="/" options={options} current={f} />
+          <a href="/api/export" className="btn btn-secondary btn-sm whitespace-nowrap" download aria-label={t.queue.exportAria(approved)}>
+            <IconDownload />{t.queue.export}<span className="num hidden text-muted-foreground sm:inline">({approved})</span>
+          </a>
         </div>
       </div>
-      <ActiveFilters basePath="/" f={f} />
+      <ActiveFilters basePath="/" f={f} t={t} />
+      <div className="num text-[13px] font-bold text-muted-foreground" role="status">{t.queue.count(claims.length, all.length)}</div>
 
-      <ul className="grid gap-3 md:grid-cols-2">
-        {claims.map((c) => (
-          <li key={c.id}>
-            <Link href={`/claims/${c.id}`}
-              className="block rounded-xl border bg-background p-4 active:bg-muted md:hover:bg-muted/50">
-              <div className="flex items-start justify-between gap-3">
-                <RiskBadge risk={c.risk} />
-                <div className="flex flex-col items-end gap-1 text-right">
-                  <div className="text-lg font-semibold tabular-nums">{idr(c.amount)}</div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {c.audit_status !== "pending" && <StatusChip status={c.audit_status} />}#{c.id}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 text-sm">
-                <span className="font-medium">{c.employee_name}</span>
-                <span className="text-muted-foreground"> · {c.category}</span>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {c.merchant} · {dayName(c.transaction_date)} {c.transaction_date}
-                {c.transaction_time ? ` ${c.transaction_time}` : ""}
-              </div>
-              {c.hits.length > 0 && (
-                <p className="mt-2 text-sm">
-                  {c.hits[0].reason}
-                  {c.hits.length > 1 && <span className="text-muted-foreground"> +{c.hits.length - 1} more</span>}
-                </p>
-              )}
-            </Link>
-          </li>
-        ))}
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {claims.map((c) => <li key={c.id}><ClaimCard c={c} t={t} /></li>)}
       </ul>
-      {claims.length === 0 && (
-        <div className="space-y-2 py-10 text-center text-sm text-muted-foreground">
-          <p>No claims match{f.q ? ` “${f.q}”` : ""} with these filters.</p>
-          <Link href="/" className="inline-flex min-h-11 items-center underline">Clear search and filters</Link>
-        </div>
-      )}
+      {claims.length === 0 && <EmptyState t={t} title={t.queue.empty} hint={t.queue.emptyHint} clearHref="/" />}
     </div>
   );
 }

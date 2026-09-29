@@ -3,7 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { safe } from "@/lib/safe-action";
+import { idr } from "@/lib/format";
+import { catLabel } from "@/lib/i18n/dict";
 import { ErrorNote } from "@/components/error-note";
+import { IconAlertCircle, IconCamera, IconCheck, IconChevronDown } from "@/components/icons";
+import { useT } from "@/components/i18n-provider";
 import { submitClaimAction, type SubmitErrorsState } from "@/app/actions";
 import type { Employee } from "@/lib/db";
 
@@ -27,30 +31,42 @@ async function shrink(file: File): Promise<File> {
   }
 }
 
-function Field({ id, label, error, hint, children }: { id: string; label: string; error?: string; hint?: string; children: React.ReactNode }) {
+function Field({ id, label, optional, error, hint, children }: {
+  id: string; label: string; optional?: string; error?: string; hint?: string; children: React.ReactNode;
+}) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
+      <label htmlFor={id} className="field-label">{label}{optional && <> <span className="opt">{optional}</span></>}</label>
       {children}
-      {hint && !error && <p id={`${id}-hint`} className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-      {error && <p id={`${id}-err`} className="mt-1 text-sm text-red-700">{error}</p>}
+      {hint && !error && <p id={`${id}-hint`} className="hint">{hint}</p>}
+      {error && <p id={`${id}-err`} className="field-error"><IconAlertCircle size={16} className="mt-0.5 shrink-0" />{error}</p>}
     </div>
   );
 }
 
-export function SubmitForm({ employees, self, categories, today }: { employees: Employee[]; self: Employee | null; categories: string[]; today: string }) {
+function Select({ className, ...p }: React.ComponentProps<"select">) {
+  return (
+    <div className="relative">
+      <select {...p} className={`input appearance-none pr-11 font-semibold ${className ?? ""}`} />
+      <IconChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-2" />
+    </div>
+  );
+}
+
+export function SubmitForm({ employees, self, limits, today }: { employees: Employee[]; self: Employee | null; limits: Record<string, number>; today: string }) {
+  const t = useT();
   const [errors, setErrors] = useState<SubmitErrorsState>({});
   const [netErr, setNetErr] = useState<string>();
   const [pending, go] = useTransition();
   const router = useRouter();
   const inFlight = useRef(false); // sync lock: React state updates too late to stop a fast double tap
   const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
   const [preview, setPreview] = useState<string>();
   const [photo, setPhoto] = useState<File>();
   const [preparing, setPreparing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const e = errors;
-  const input = (bad?: string) => `h-12 w-full rounded-xl border bg-background px-3 text-base ${bad ? "border-red-600" : ""}`;
   const aria = (id: string, bad?: string) => ({ "aria-invalid": !!bad, "aria-describedby": bad ? `${id}-err` : `${id}-hint` });
 
   return (
@@ -79,92 +95,109 @@ export function SubmitForm({ employees, self, categories, today }: { employees: 
     >
       <ErrorNote msg={netErr} />
       {Object.keys(e).length > 0 && (
-        <p id="form-errors" tabIndex={-1} role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-          Please fix the fields marked below.
-        </p>
+        <p id="form-errors" tabIndex={-1} role="alert" className="banner banner-error">{t.submit.fix}</p>
       )}
-      <div className="space-y-4 rounded-xl border bg-background p-4">
-        {self ? (
-          <div className="text-sm">
-            <span className="text-muted-foreground">Submitting as </span>
-            <span className="font-medium">{self.name} · {self.department_name}</span>
-            <span className="text-muted-foreground"> (MOCK employee linked to your login)</span>
-          </div>
-        ) : (
-        <Field id="employee" label="Submitting as (MOCK employee)" error={e.employee}>
-          <select id="employee" name="employee" defaultValue={employees[0]?.id} className={input(e.employee)} {...aria("employee", e.employee)}>
-            {employees.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.department_name}</option>)}
-          </select>
-        </Field>
+
+      {self && (
+        <div className="banner banner-info items-center">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-extrabold text-primary-foreground" aria-hidden>
+            {self.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+          </span>
+          <span className="min-w-0 flex-1 leading-snug">
+            <span className="font-semibold">{t.submit.as}</span> <b>{self.name}</b>
+            <br /><span className="text-ink-2">{self.department_name}</span>
+          </span>
+          <span className="mock-tag" title={t.submit.linked}>{t.app.mock}</span>
+        </div>
+      )}
+
+      <div className="card space-y-4 p-4 md:p-5">
+        {!self && (
+          <Field id="employee" label={t.submit.asPick} error={e.employee}>
+            <Select id="employee" name="employee" defaultValue={employees[0]?.id} {...aria("employee", e.employee)}>
+              {employees.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.department_name}</option>)}
+            </Select>
+          </Field>
         )}
-        <Field id="category" label="Category" error={e.category}>
-          <select id="category" name="category" defaultValue="" className={input(e.category)} {...aria("category", e.category)}>
-            <option value="" disabled>Choose…</option>
-            {categories.map((c) => <option key={c}>{c}</option>)}
-          </select>
+        <Field id="category" label={t.submit.category} error={e.category}
+          hint={category && limits[category] ? t.submit.limit(idr(limits[category])) : undefined}>
+          <Select id="category" name="category" value={category} onChange={(ev) => setCategory(ev.target.value)} {...aria("category", e.category)}>
+            <option value="" disabled>{t.submit.choose}</option>
+            {Object.keys(limits).map((c) => <option key={c} value={c}>{catLabel(t, c)}</option>)}
+          </Select>
         </Field>
-        <Field id="merchant" label="Merchant" error={e.merchant}>
+        <Field id="merchant" label={t.submit.merchant} error={e.merchant}>
           <input id="merchant" name="merchant" autoComplete="off" autoCapitalize="words" maxLength={80}
-            className={input(e.merchant)} {...aria("merchant", e.merchant)} />
+            className="input font-semibold" {...aria("merchant", e.merchant)} />
         </Field>
-        <Field id="amount" label="Amount" error={e.amount}>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
+        <Field id="amount" label={t.submit.amount} error={e.amount}>
+          <div className="input-prefix">
+            <span>Rp</span>
             <input id="amount" name="amount" inputMode="numeric" autoComplete="off"
               value={amount ? Number(amount).toLocaleString("id-ID") : ""}
               onChange={(ev) => setAmount(ev.target.value.replace(/\D/g, "").slice(0, 10))}
-              className={`${input(e.amount)} pl-10 tabular-nums`} {...aria("amount", e.amount)} />
+              className="input num font-bold" {...aria("amount", e.amount)} />
           </div>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field id="date" label="Date" error={e.date}>
-            <input id="date" name="date" type="date" defaultValue={today} max={today} className={input(e.date)} {...aria("date", e.date)} />
+          <Field id="date" label={t.submit.date} error={e.date}>
+            <input id="date" name="date" type="date" defaultValue={today} max={today} className="input num font-semibold" {...aria("date", e.date)} />
           </Field>
-          <Field id="time" label="Time (optional)" error={e.time} hint="Needed for off-hours check">
-            <input id="time" name="time" type="time" className={input(e.time)} {...aria("time", e.time)} />
+          <Field id="time" label={t.submit.time} optional={t.submit.optional} error={e.time}>
+            <input id="time" name="time" type="time" className="input num" {...aria("time", e.time)} />
           </Field>
         </div>
-        <Field id="description" label="Description (optional)" error={e.description}>
-          <input id="description" name="description" maxLength={200} className={input(e.description)} {...aria("description", e.description)} />
+        {!e.time && <p id="time-hint" className="hint -mt-2">{t.submit.timeHint}</p>}
+        <Field id="description" label={t.submit.description} optional={t.submit.optional} error={e.description}>
+          <input id="description" name="description" maxLength={200} className="input" {...aria("description", e.description)} />
         </Field>
-      </div>
 
-      <div className="space-y-2 rounded-xl border bg-background p-4">
-        <span className="block text-sm font-medium">Receipt photo</span>
-        {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt="Selected receipt" className="max-h-56 rounded-lg border object-contain" />
-        ) : (
-          <p className="text-sm text-muted-foreground">No photo yet. Claims without a receipt are flagged.</p>
-        )}
-        <input ref={fileRef} id="receipt" type="file" accept="image/*" className="sr-only" aria-describedby={e.receipt ? "receipt-err" : undefined}
-          onChange={async (ev) => {
-            const f = ev.target.files?.[0];
-            if (!f) return;
-            setPreparing(true);
-            const small = await shrink(f);
-            setPhoto(small);
-            setPreview((old) => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(small); });
-            setPreparing(false);
-          }} />
-        <div className="grid grid-cols-2 gap-3">
-          <label htmlFor="receipt" className="flex h-12 cursor-pointer items-center justify-center rounded-xl border text-sm font-medium">
-            {preparing ? "Preparing…" : preview ? "Change photo" : "Take or choose photo"}
-          </label>
-          {preview && (
-            <button type="button" className="h-12 rounded-xl border text-sm font-medium"
-              onClick={() => { setPhoto(undefined); setPreview(undefined); if (fileRef.current) fileRef.current.value = ""; }}>
-              Remove
-            </button>
-          )}
+        <div>
+          <span className="field-label">{t.submit.photo}</span>
+          <div className="flex gap-3 rounded-[14px] border-[1.5px] border-border-strong bg-card-2 p-3">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt={t.submit.selectedAlt} className="h-32 w-24 shrink-0 rounded-[10px] bg-card object-cover" />
+            ) : (
+              <span className="flex h-32 w-24 shrink-0 items-center justify-center rounded-[10px] bg-card text-muted-foreground"><IconCamera size={32} /></span>
+            )}
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              {preview ? (
+                <span className="flex items-center gap-1.5 text-sm font-bold text-[var(--st-approved)]"><IconCheck size={16} strokeWidth={2.6} />{t.submit.photoAdded}</span>
+              ) : (
+                <span className="text-sm text-muted-foreground">{t.submit.noPhoto}</span>
+              )}
+              <input ref={fileRef} id="receipt" type="file" accept="image/*" className="sr-only" aria-describedby={e.receipt ? "receipt-err" : undefined}
+                onChange={async (ev) => {
+                  const f = ev.target.files?.[0];
+                  if (!f) return;
+                  setPreparing(true);
+                  const small = await shrink(f);
+                  setPhoto(small);
+                  setPreview((old) => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(small); });
+                  setPreparing(false);
+                }} />
+              <div className="mt-auto flex flex-wrap gap-2">
+                <label htmlFor="receipt" className="btn btn-secondary btn-sm flex-1 cursor-pointer">
+                  {preparing ? t.submit.preparing : preview ? t.submit.change : t.submit.take}
+                </label>
+                {preview && (
+                  <button type="button" className="btn btn-danger-outline btn-sm flex-1"
+                    onClick={() => { setPhoto(undefined); setPreview(undefined); if (fileRef.current) fileRef.current.value = ""; }}>
+                    {t.submit.remove}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          {e.receipt && <p id="receipt-err" className="field-error"><IconAlertCircle size={16} className="mt-0.5 shrink-0" />{e.receipt}</p>}
         </div>
-        {e.receipt && <p id="receipt-err" className="text-sm text-red-700">{e.receipt}</p>}
       </div>
 
-      <button type="submit" disabled={pending || preparing}
-        className="h-14 w-full rounded-xl bg-foreground text-base font-semibold text-background disabled:opacity-50">
-        {pending ? "Submitting…" : "Submit claim"}
+      <button type="submit" disabled={pending || preparing} className="btn btn-primary min-h-14 w-full rounded-2xl text-[17px]">
+        {pending ? t.submit.submitting : t.submit.button}
       </button>
+      <p className="hint text-center">{t.submit.after}</p>
     </form>
   );
 }

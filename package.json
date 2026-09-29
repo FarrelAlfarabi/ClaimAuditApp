@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run seed && next dev",
+    "dev": "npm run seed && next dev -H 0.0.0.0",
     "seed": "tsx scripts/seed.ts",
     "build": "npm run seed && next build",
     "start": "next start",

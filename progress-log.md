@@ -54,3 +54,32 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 
 **Discrepancies / risks vs. master-plan.md**
 - Master plan section 5 says SQLite does not persist on Vercel and the demo runs locally. Still true. The Vercel build works for reading (list, queue, detail), but approve/reject/submit (S3, S5) will NOT persist there: Vercel's file system is read-only and resets. Treat the Vercel URL as a shareable preview, not the demo machine. If a working hosted demo is required, that is a scope change (e.g. move to Supabase Postgres) and needs a decision log row.
+
+## 2026-09-29 | S2 | 100% of S2 (S0 to S2 about 7.5h of the 14h build plan by estimate) | No blocker | Wed demo time still unknown (OQ-01); feature freeze Tue 23:00
+
+**Plan check before this stage:** master-plan.md on `main` had moved to v2.2 (v2.0 full deal, v2.1 mobile-first for all roles + phone-only demo, v2.2 Finance on phone and desktop). The build branch was still on v1.1. Merged `main` into the build branch (no conflicts) and built S2 against v2.2.
+
+**What changed and why**
+- Phone app shell (sticky top bar with "DEMO · MOCK DATA", bottom tabs Queue / All claims). v2.1 moved this into S0; it was missing, so it was added here.
+- `/` is now the audit queue: claims run through the S1 engine, riskiest first, shown as cards (risk badge, amount, employee, category, merchant, day and date, first reason). High / Medium / Low count tiles also act as one-tap filters.
+- Filters in a bottom sheet (scrolls on short screens): risk, category, department (MOCK), manager status (MOCK). Filters live in the URL so the server does the filtering.
+- `/claims/[id]` claim detail: receipt on top with tap-to-zoom full screen (or a red "No receipt attached" box), then "Why it was flagged" with points and plain reasons, then claim fields. On a laptop, receipt and data sit side by side.
+- The old raw list moved to `/claims` (All claims tab); the ID links to the detail.
+- `npm run dev` now listens on all network addresses (`-H 0.0.0.0`) so a phone on the same hotspot can open it (S5 still has to test the hotspot link itself).
+- Next.js dev badge hidden so it does not show on the demo phone.
+
+**Verified (Playwright at 390x844, phone size)**
+- Queue shows 80 cards, counts 10 High / 10 Medium / 60 Low, matching the S0 answer key (4 over-limit + 6 duplicates = 10 High; 5 weekend + 3 off-hours + 2 missing receipt = 10 Medium).
+- Filter sheet, choosing Medium, gives exactly 10 cards.
+- Tapping the first card opens its detail: 1 tap from the queue, 2 with a filter. Meets "find and open any flagged claim in 2 taps".
+- `tsc`, `eslint` clean; 16/16 engine tests still pass.
+- Not verified: a real phone (only emulated size); tap-to-zoom was not clicked in the automated run.
+
+**Decisions**
+- Status filter only has "approved" today, because audit decisions (approve/reject) arrive in S3. Kept so S3 needs no filter rework.
+- Claim detail follows the plan's order (receipt, then reasons). Worth reconsidering in S6: for an auditor, reasons first may be faster.
+
+**Discrepancies vs. master-plan.md v2.2**
+- v2.1 says "as of Mon 14:53 no stage had started (progress-log.md is empty)". Not true: S0 and S1 were committed on `claude/kind-pasteur-c39hp2`, just not merged to `main`, so the log on `main` looked empty. The re-timing in 4.1 is pessimistic by about 4.5h. Suggest correcting it in the next plan revision.
+- 5.1 still says the demo does not deploy to Vercel. A Vercel preview exists (on request); it works for read-only screens only, and S3/S5 writes will not persist there.
+- S0's v2.2 "done when" (raw list shown on a phone over the laptop's address) is not confirmed on a real phone yet. Move it to the S5 hotspot test.

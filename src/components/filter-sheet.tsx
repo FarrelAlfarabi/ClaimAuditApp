@@ -17,7 +17,30 @@ type Options = {
   dates?: boolean;
   amounts?: boolean;
   sort?: boolean;
+  employees?: string[];
+  managers?: string[];
+  auditors?: string[];   // emails; "none" is added for decisions made without login
+  time?: boolean;
+  source?: boolean;
+  day?: boolean;
+  hitCount?: boolean;
 };
+
+function Select({ label, name, values, value, onPick, all }: {
+  label: string; name: keyof Filters; values: string[]; value?: string; onPick: (k: keyof Filters, v?: string) => void; all: string;
+}) {
+  const id = `f-${name}`;
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="block text-sm font-medium">{label}</label>
+      <select id={id} value={value ?? ""} onChange={(e) => onPick(name, e.target.value || undefined)}
+        className="h-12 w-full rounded-xl border bg-background px-3 text-base">
+        <option value="">{all}</option>
+        {values.map((v) => <option key={v} value={v}>{v === "none" ? "No login (demo mode)" : v}</option>)}
+      </select>
+    </div>
+  );
+}
 
 const STATUS_LABEL: Record<string, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
 
@@ -62,7 +85,7 @@ export function FilterSheet({ basePath = "/", options, current }: { basePath?: s
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
       if (e.key !== "Tab") return;
-      const f = [...el.querySelectorAll<HTMLElement>("button, input")];
+      const f = [...el.querySelectorAll<HTMLElement>("button, input, select")];
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -103,6 +126,13 @@ export function FilterSheet({ basePath = "/", options, current }: { basePath?: s
             {options.statuses && <Chips label="Audit status" name="status" values={options.statuses} labels={STATUS_LABEL} value={draft.status} onPick={pick} />}
             {options.categories && <Chips label="Category" name="category" values={options.categories} value={draft.category} onPick={pick} />}
             {options.departments && <Chips label="Department (MOCK)" name="dept" values={options.departments} value={draft.dept} onPick={pick} />}
+            {options.employees && <Select label="Submitted by (MOCK employee)" name="emp" values={options.employees} value={draft.emp} onPick={pick} all="Everyone" />}
+            {options.managers && <Select label="Manager (MOCK)" name="mgr" values={options.managers} value={draft.mgr} onPick={pick} all="Any manager" />}
+            {options.auditors && <Select label="Decided by (Finance user)" name="by" values={options.auditors} value={draft.by} onPick={pick} all="Anyone" />}
+            {options.hitCount && <Chips label="Number of flags" name="hits" values={["0", "1", "2+"]} labels={{ "0": "None", "1": "One", "2+": "Two or more" }} value={draft.hits} onPick={pick} />}
+            {options.day && <Chips label="Day" name="day" values={["weekday", "weekend"]} labels={{ weekday: "Weekday", weekend: "Weekend" }} value={draft.day} onPick={pick} />}
+            {options.time && <Chips label="Transaction time" name="time" values={["with", "without"]} labels={{ with: "Time entered", without: "No time" }} value={draft.time} onPick={pick} />}
+            {options.source && <Chips label="Source" name="src" values={["seed", "demo"]} labels={{ seed: "Sample data", demo: "Submitted in demo" }} value={draft.src} onPick={pick} />}
             {options.receipt && <Chips label="Receipt" name="receipt" values={["with", "without"]} labels={{ with: "Has receipt", without: "No receipt" }} value={draft.receipt} onPick={pick} />}
             {options.dates && (
               <fieldset className="space-y-2">

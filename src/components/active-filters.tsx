@@ -15,6 +15,13 @@ export function ActiveFilters({ basePath, f }: { basePath: string; f: Filters })
   if (f.category) chips.push(["category", f.category]);
   if (f.dept) chips.push(["dept", f.dept]);
   if (f.status) chips.push(["status", STATUS[f.status] ?? f.status]);
+  if (f.emp) chips.push(["emp", `By ${f.emp}`]);
+  if (f.mgr) chips.push(["mgr", `Manager: ${f.mgr}`]);
+  if (f.by) chips.push(["by", f.by === "none" ? "Decided without login" : `Decided by ${f.by}`]);
+  if (f.hits) chips.push(["hits", f.hits === "0" ? "No flags" : f.hits === "1" ? "One flag" : "2+ flags"]);
+  if (f.day) chips.push(["day", f.day === "weekend" ? "Weekend" : "Weekday"]);
+  if (f.time) chips.push(["time", f.time === "with" ? "Time entered" : "No time"]);
+  if (f.src) chips.push(["src", f.src === "demo" ? "Submitted in demo" : "Sample data"]);
   if (f.receipt) chips.push(["receipt", f.receipt === "with" ? "Has receipt" : "No receipt"]);
   if (f.from || f.to) chips.push(["date", `${f.from ?? "…"} to ${f.to ?? "…"}`]);
   if (f.min || f.max) chips.push(["amount", `${f.min ? idr(Number(f.min)) : "Rp 0"} to ${f.max ? idr(Number(f.max)) : "any"}`]);

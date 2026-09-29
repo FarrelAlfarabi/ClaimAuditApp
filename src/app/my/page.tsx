@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/search-bar";
 import { FilterSheet } from "@/components/filter-sheet";
 import { ActiveFilters } from "@/components/active-filters";
 import Link from "next/link";
+import { getEffectiveConfig } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +21,8 @@ export default async function MyClaims({ searchParams }: { searchParams: Promise
   const shown = applyFilters(mine, f);
   const options = {
     statuses: ["pending", "approved", "rejected"],
-    categories: [...new Set(mine.map((c) => c.category))].sort(),
-    receipt: true, dates: true, amounts: true, sort: true,
+    categories: Object.keys(getEffectiveConfig().categoryLimits).sort(),
+    risk: true, flags: true, receipt: true, dates: true, amounts: true, sort: true, time: true, day: true, hitCount: true,
   };
   return (
     <div className="space-y-4">
@@ -29,20 +30,16 @@ export default async function MyClaims({ searchParams }: { searchParams: Promise
         <h1 className="text-xl font-semibold">Submitted in this demo</h1>
         <p className="text-sm text-muted-foreground">Status updates when Finance approves or rejects.</p>
       </div>
+      <SearchBar placeholder="Search merchant, category, claim #, reason…" />
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-muted-foreground" role="status">{shown.length} of {mine.length} claims</span>
+        <FilterSheet basePath="/my" options={options} current={f} />
+      </div>
+      <ActiveFilters basePath="/my" f={f} />
       {mine.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">Nothing submitted yet.</p>
-      ) : (
-        <>
-          <SearchBar placeholder="Search merchant, category, claim #…" />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground" role="status">{shown.length} of {mine.length} claims</span>
-            <FilterSheet basePath="/my" options={options} current={f} />
-          </div>
-          <ActiveFilters basePath="/my" f={f} />
-          {shown.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">No claims match. <Link href="/my" className="inline-flex min-h-11 items-center underline">Clear</Link></p>
-          )}
-        </>
+        <p className="py-10 text-center text-sm text-muted-foreground">Nothing submitted yet. <Link href="/submit" className="inline-flex min-h-11 items-center underline">Submit a claim</Link></p>
+      ) : shown.length === 0 && (
+        <p className="py-6 text-center text-sm text-muted-foreground">No claims match. <Link href="/my" className="inline-flex min-h-11 items-center underline">Clear search and filters</Link></p>
       )}
       <ul className="space-y-3">
         {shown.map((c) => (

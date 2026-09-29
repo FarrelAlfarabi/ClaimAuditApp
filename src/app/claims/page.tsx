@@ -28,6 +28,10 @@ export default async function AllClaims({ searchParams }: { searchParams: Promis
     departments: uniq(all.map((c) => c.department_name)),
     statuses: ["pending", "approved", "rejected"],
     risk: true, flags: true, receipt: true, dates: true, amounts: true, sort: true,
+    employees: uniq(all.map((c) => c.employee_name)),
+    managers: uniq(all.map((c) => c.manager_name)),
+    auditors: [...uniq(all.flatMap((c) => (c.audited_by ? [c.audited_by] : []))), ...(all.some((c) => c.audit_status !== "pending" && !c.audited_by) ? ["none"] : [])],
+    time: true, source: true, day: true, hitCount: true,
   };
 
   return (

@@ -55,7 +55,7 @@ export function FilterSheet({ options, current }: { options: Options; current: F
             <Chips label="Risk" name="risk" values={RISKS} value={draft.risk} onPick={pick} />
             <Chips label="Category" name="category" values={options.categories} value={draft.category} onPick={pick} />
             <Chips label="Department (MOCK)" name="dept" values={options.departments} value={draft.dept} onPick={pick} />
-            <Chips label="Manager status (MOCK)" name="status" values={options.statuses} value={draft.status} onPick={pick} />
+            <Chips label="Audit status" name="status" values={options.statuses} value={draft.status} onPick={pick} />
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => apply({})} className="h-12 rounded-xl border text-sm font-medium">Clear</button>
               <button type="button" onClick={() => apply(draft)}

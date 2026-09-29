@@ -4,6 +4,8 @@ import { idr, dayName } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
 import { FilterSheet, type Filters } from "@/components/filter-sheet";
 import type { RiskLevel } from "@/lib/rules/engine";
+import { StatusChip } from "@/components/status-chip";
+import { BatchApprove } from "@/components/batch-approve";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +19,14 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
       (!f.risk || c.risk === f.risk) &&
       (!f.category || c.category === f.category) &&
       (!f.dept || c.department_name === f.dept) &&
-      (!f.status || c.manager_status === f.status)
+      (!f.status || c.audit_status === f.status)
   );
   const counts = (["High", "Medium", "Low"] as RiskLevel[]).map((r) => ({ r, n: all.filter((c) => c.risk === r).length }));
+  const approved = all.filter((c) => c.audit_status === "approved").length;
   const options = {
     categories: uniq(all.map((c) => c.category)),
     departments: uniq(all.map((c) => c.department_name)),
-    statuses: uniq(all.map((c) => c.manager_status)),
+    statuses: ["pending", "approved", "rejected"],
   };
 
   return (
@@ -43,9 +46,16 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
         ))}
       </div>
 
+      <BatchApprove count={all.filter((c) => c.risk === "Low" && c.audit_status === "pending").length} />
+
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{claims.length} of {all.length} claims</span>
-        <FilterSheet options={options} current={f} />
+        <div className="flex gap-2">
+          <a href="/api/export" className="flex h-10 items-center rounded-full border bg-background px-4 text-sm font-medium">
+            Export CSV ({approved})
+          </a>
+          <FilterSheet options={options} current={f} />
+        </div>
       </div>
 
       <ul className="grid gap-3 md:grid-cols-2">
@@ -55,9 +65,11 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
               className="block rounded-xl border bg-background p-4 active:bg-muted md:hover:bg-muted/50">
               <div className="flex items-start justify-between gap-3">
                 <RiskBadge risk={c.risk} />
-                <div className="text-right">
+                <div className="flex flex-col items-end gap-1 text-right">
                   <div className="text-lg font-semibold tabular-nums">{idr(c.amount)}</div>
-                  <div className="text-xs text-muted-foreground">#{c.id}</div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {c.audit_status !== "pending" && <StatusChip status={c.audit_status} />}#{c.id}
+                  </div>
                 </div>
               </div>
               <div className="mt-2 text-sm">

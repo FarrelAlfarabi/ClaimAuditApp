@@ -19,5 +19,13 @@
     "off_hours": 1,
     "missing_receipt": 2
   },
-  "riskBands": { "mediumMin": 1, "highMin": 3 }
+  "riskBands": { "mediumMin": 1, "highMin": 3 },
+  "rejectionReasons": [
+    "Over category limit",
+    "Duplicate claim",
+    "Receipt missing or unreadable",
+    "Not a business expense",
+    "Weekend or off-hours without justification",
+    "Other (see note)"
+  ]
 }

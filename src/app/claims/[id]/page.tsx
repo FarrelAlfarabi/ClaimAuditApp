@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAuditedClaim } from "@/lib/audit";
+import { getAuditedClaims } from "@/lib/audit";
+import { rejectionReasons } from "@/lib/rules/config";
+import { DecisionPanel } from "@/components/decision-panel";
 import { idr, dayName } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
 import { ReceiptViewer } from "@/components/receipt-viewer";
@@ -8,8 +10,11 @@ import { ReceiptViewer } from "@/components/receipt-viewer";
 export const dynamic = "force-dynamic";
 
 export default async function ClaimDetail({ params }: { params: Promise<{ id: string }> }) {
-  const c = getAuditedClaim(Number((await params).id));
+  const id = Number((await params).id);
+  const all = getAuditedClaims();
+  const c = all.find((x) => x.id === id);
   if (!c) notFound();
+  const nextId = all.find((x) => x.id !== id && x.audit_status === "pending")?.id ?? null;
 
   const fields: [string, string][] = [
     ["Employee (MOCK)", c.employee_name],
@@ -33,6 +38,9 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
         </div>
         <RiskBadge risk={c.risk} className="px-4 py-1.5 text-base" />
       </div>
+
+      <DecisionPanel id={c.id} status={c.audit_status} reason={c.audit_reason} note={c.audit_note}
+        reasons={rejectionReasons} nextId={nextId} />
 
 
       <div className="grid gap-4 md:grid-cols-2">

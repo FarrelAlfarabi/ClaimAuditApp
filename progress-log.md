@@ -83,3 +83,32 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 - v2.1 says "as of Mon 14:53 no stage had started (progress-log.md is empty)". Not true: S0 and S1 were committed on `claude/kind-pasteur-c39hp2`, just not merged to `main`, so the log on `main` looked empty. The re-timing in 4.1 is pessimistic by about 4.5h. Suggest correcting it in the next plan revision.
 - 5.1 still says the demo does not deploy to Vercel. A Vercel preview exists (on request); it works for read-only screens only, and S3/S5 writes will not persist there.
 - S0's v2.2 "done when" (raw list shown on a phone over the laptop's address) is not confirmed on a real phone yet. Move it to the S5 hotspot test.
+
+## 2026-09-29 | S3 | 100% of S3 (S0 to S3 about 9.5h of the 14h build plan by estimate) | No blocker | Wed demo time still unknown (OQ-01); feature freeze Tue 23:00
+
+**Plan check:** master-plan.md on `main` unchanged since v2.2. Built against v2.2 section 4.2 S3.
+
+**What changed and why**
+- Claims now carry a Finance decision: `audit_status` (pending / approved / rejected), `audit_reason`, `audit_note`, `audited_at`.
+- Claim detail: Approve and Reject buttons right under the amount (reachable without scrolling). Reject opens a list of standard reasons (MOCK list, kept in `rules.config.json`) plus an optional note. After a decision: result shown, Undo, and "Next pending claim →" to keep the audit flow moving.
+- Queue: "Approve all N" bar for pending Low-risk claims, with a confirm step. The list of Low claims is worked out on the server by the engine, never trusted from the phone.
+- Queue: decided claims show an Approved / Rejected chip and drop below pending ones. The status filter now filters on audit status (the old manager-status filter only ever had "approved").
+- CSV export of verified (approved) claims at `/api/export`, downloaded from the queue. UTF-8 with BOM and Windows line endings so Excel shows Indonesian text and columns correctly; fields with commas or quotes are escaped.
+- Vercel: the bundled DB is copied to `/tmp` at first use so approve/reject work there too, but only for the life of one server instance (see risks).
+
+**Verified (Playwright, 390x844)**
+- Reject claim #8 with "Over category limit" and a note containing quotes and a comma, saved and shown.
+- Approve claim #14, then Undo, back to pending.
+- Batch approve: exactly 60 Low claims approved (matches the 60 clean seed claims).
+- CSV: 61 data rows (60 Low + #14), 13 columns on every row, BOM present, parses cleanly.
+- Rejected filter shows exactly 1 claim.
+- `tsc`, `eslint` clean; 16/16 engine tests pass.
+- Not verified: opening the CSV in real Excel (no Excel here), and a real phone download.
+
+**Decisions**
+- Undo added (not in plan): a mis-tap on a phone during the demo would otherwise be permanent. Very small cost.
+- Export = approved claims only ("verified claims" in plan 2.1). Rejected claims are not exported.
+- `npm run dev` still re-seeds on every start, which wipes decisions. Good for the demo (clean start), but restarting the server mid-demo loses progress. The S5 reset button will make this explicit.
+
+**Risks / discrepancies vs. master-plan.md v2.2**
+- Vercel writes are temporary: approvals live in `/tmp` of one server instance and vanish when it sleeps (roughly minutes idle) or when a different instance answers. Someone clicking around the Vercel link may see decisions "disappear". Fine as a preview; not a demo machine. Plan 5.1 still says no Vercel deploy; the plan should record the preview.

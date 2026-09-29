@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.2
-**Date:** 28 Sep 2026 (Mon)
+**Version:** 2.3
+**Date:** 29 Sep 2026 (Tue)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
 **Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v2.3:** corrections after S0 to S6 were built (all merged to `main` at commit 999dfeb, Tue 29 Sep). (1) The v2.1 claim "no stage had started by Mon 14:53" was wrong: S0 and S1 were already committed on a build branch that had not been merged to `main`, so the log on `main` looked empty. 4.1 is corrected. (2) 5.1 said no Vercel deploy; a Vercel preview and production project now exist, for read-only viewing. (3) 4.3 cut order updated: S4 and everything above it were built, so nothing was cut; OQ-24 is moot. Added: 4.4 build status. Changed: 4.1, 4.3, 4.4 (new), 5.1, 6.2 (OQ-24), 7, 8. No change to scope, effort, price or the Wednesday goal.
 
 **What changed in v2.2:** Finance uses both phone and desktop, so the Finance screens get a full desktop layout as well as the phone layout (OQ-25 closed). Changed: 2.2, 3, 4.2 (S6), 5.4, 6.2, 7, 8. Effort and price unchanged: v2.1 already counted both layouts.
 
@@ -156,12 +158,12 @@ Stages after Wednesday are in section 10.
 
 OQ-00 answered: day job is low effort, projects are infrequent. Daytime hours Mon and Tue are usable, not just evenings. Revised budget:
 
-v2.1 re-timing: as of Mon 14:53 no stage had started (progress-log.md is empty), so the morning slots are gone. The phone-only demo adds about 1.5 hours (card layouts, stacked detail, phone-to-laptop connection and screen mirroring).
+v2.1 re-timing (corrected in v2.3): v2.1 said that as of Mon 14:53 no stage had started because progress-log.md on `main` was empty. That was wrong: S0 and S1 were already committed on a build branch (not yet merged to `main`), so the plan under-counted progress by about 4.5 hours of stage time. The phone-only demo adds about 1.5 hours (card layouts, stacked detail, phone-to-laptop connection and screen mirroring). The hours below are the plan's budget; hours actually spent are not recorded anywhere and cannot be read from the repo.
 
 - Mon: 6h (from about 15:00)
 - Tue: **8h** (was 7h; the extra hour pays for the phone-only demo; pending Farrel's confirmation, OQ-24)
 - Wed early morning before the demo: about 2h, for rehearsal and fixes only
-- **Total: about 16h** (14h build + 2h rehearsal). Buffer is down to 1h. If Tue has only 7h, the settings screen (S4) is cut first. No new features after Tue 23:00.
+- **Total: about 16h** (14h build + 2h rehearsal). Buffer was 1h. As of v2.3, S0 to S6 are built (4.4), so the Tuesday-hours risk behind OQ-24 has passed. No new features after Tue 23:00.
 
 ### 4.2 Stage plan (one commit per stage, review between stages)
 
@@ -180,6 +182,8 @@ Every screen is built at phone width (about 390px) first, then checked on a lapt
 
 ### 4.3 Cut order if behind (cut from the top)
 
+Status at v2.3: nothing on this list was cut. It now applies only to **demo-day fallbacks** (a feature that breaks on the day is hidden, not fixed live), in the same order.
+
 1. Polish (S6)
 2. Settings screen (S4): fall back to showing the config file on the laptop and saying so
 3. Batch approve Low risk
@@ -190,6 +194,23 @@ Every screen is built at phone width (about 390px) first, then checked on a lapt
 Never cut: engine + reasons + risk-sorted queue + claim detail, on the phone. That is the demo.
 
 **Hard stop:** no new features after Tue 23:00. Wednesday morning is rehearsal only.
+
+### 4.4 Build status (v2.3, Tue 29 Sep)
+
+Source of truth for each stage's detail is progress-log.md; QA findings are in docs/qa-audit.md; the demo script is docs/demo-runbook.md.
+
+| Stage | Status | Note |
+|---|---|---|
+| S0 | Built, merged to `main` | "Done when" (raw list on a phone via the laptop's address) checked only in a phone-size desktop browser, not on a real phone |
+| S1 | Built, merged | 16 engine tests pass; every planted problem caught, no false flags on the 60 clean claims |
+| S2 | Built, merged | Card queue, bottom-sheet filters, stacked detail |
+| S3 | Built, merged | Approve, reject with standard reasons, undo, batch approve Low, CSV export |
+| S4 | Built, merged | Settings screen (limits, near-limit %, hours) applied live |
+| S5 | Built, merged | Submit form with photo, role switcher, reset. **Phone hotspot and mirroring not yet tested on a real phone (OQ-23)** |
+| S6 | Built (used for a QA and UX audit), merged | Offline-safe actions, double-submit lock, decision conflicts, dialog accessibility, 44 px touch targets |
+| S7 | Not started | Needs Farrel's phone: hotspot test, 2 rehearsals, backup video |
+
+Open risks that can still break Wednesday: real-phone hotspot and mirroring (OQ-23), OQ-01 (demo time and format), OQ-02 (what Wednesday must decide). CSV download and photo upload on a real iPhone are untested.
 
 **Showing a phone to a room (fallbacks, in order):** mirror the phone to the laptop and share or project the laptop screen (method depends on the phone, OQ-23) → if mirroring fails, the laptop browser in phone-size view (Chrome device mode) → if the app fails, the backup video.
 
@@ -205,11 +226,11 @@ Picked for speed with Farrel's existing React/Vercel experience.
 |---|---|---|
 | App | Next.js (App Router) + TypeScript | One codebase for UI and API routes. Heavier than a pure SPA but no separate backend. |
 | UI | Tailwind + shadcn/ui, phone-first layouts (cards, bottom sheets, bottom tabs) | Fast, clean components. Tables become cards on phones; more layout work than a desktop table. |
-| Data | SQLite via better-sqlite3, seed script | Zero setup. Does not persist on Vercel, so no shareable hosted link for Wednesday. Replaced by Postgres in Phase 1 (5.4). |
-| Receipts | Static placeholder images in `/public/mock-receipts` | No upload storage. |
+| Data | SQLite via better-sqlite3, seed script | Zero setup. Vercel's file system is read-only, so on Vercel the app copies the database to a temporary folder: approvals, uploads and rule changes there vanish within minutes and are not shared between server instances. A Vercel preview and production project exist (v2.3) for looking at the screens only; they are not the demo machine. Replaced by Postgres in Phase 1 (5.4). |
+| Receipts | Static placeholder images in `/public/mock-receipts` for seed claims; photos uploaded through the demo submit form are saved on the laptop's disk (`data/uploads`), named by their SHA-256 hash so an identical file triggers the file-hash duplicate rule | Demo only: no retention policy, no access control. Real storage is a Phase 1 decision (5.4). |
 | Engine | Pure TypeScript functions, input = claim + config, output = rule hits + score | Easy to unit test; carries into Phase 1 unchanged. |
 | Config | `rules.config.json` (limits per category, near-limit %, working hours, score weights) | Editable without code change. No audit trail of config changes yet. |
-| Demo delivery | App runs on Farrel's laptop; the phone opens it over the phone's own hotspot (laptop joins the hotspot); phone screen mirrored to the laptop for the audience | No venue Wi-Fi and no deploy needed. Adds a phone-to-laptop link that must be tested in S5. Backups: Chrome phone-size view, then recorded video. |
+| Demo delivery | App runs on Farrel's laptop; the phone opens it over the phone's own hotspot (laptop joins the hotspot); phone screen mirrored to the laptop for the audience | No venue Wi-Fi and no deploy needed. Run with `npm run demo` (production build; `npm run dev` recompiles pages on first visit and is slower). Run `npm run seed` once beforehand; restarting `npm run dev` or re-seeding wipes all demo data. Adds a phone-to-laptop link that has still not been tested on a real phone (OQ-23). Backups: Chrome phone-size view, then recorded video. |
 | Auth | None, role switcher | Acceptable only because it is labeled as demo. |
 
 ### 5.3 Risk scoring (placeholder, config-driven)
@@ -297,7 +318,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | OQ-21 | Support expectations after go-live: working hours only or 24/7, response time for "can't submit claims" vs. small bugs | Financial lead | Proposal (retainer size) |
 | OQ-22 | Is the Wednesday demo work paid, or part of the sales effort? | Farrel | Nothing; record the answer for the effective rate |
 | OQ-23 | Which phone runs the demo (Android or iPhone), and how will it be mirrored to the laptop? Test it before S5. | Farrel | **Wednesday** (S5) |
-| OQ-24 | Can Farrel give Tuesday 8 hours instead of 7? If not, the settings screen (S4) is cut. | Farrel | **Wednesday** (S4) |
+| ~~OQ-24~~ | ~~Can Farrel give Tuesday 8 hours instead of 7? If not, the settings screen (S4) is cut.~~ **Moot (v2.3):** S4 was built. Hours actually spent are not recorded; Farrel to note them in progress-log.md if he wants the effective rate (1.3) tracked. | Farrel | Closed |
 | ~~OQ-25~~ | ~~Does Finance audit on phones, or was "mobile" meant for employees?~~ **Answered (Farrel, 28 Sep):** Finance uses both phone and desktop. Both Finance layouts are in Phase 1 (12.1). | Farrel | Closed |
 
 ---
@@ -309,8 +330,9 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | Not enough build hours before Wednesday | Low (after OQ-00) | High | 15h plan with buffer stage S6, strict cut order, feature freeze Tue 23:00 |
 | Scope creep during the build ("just add manager approval") | Medium | High | Any addition goes through this plan as a decision log row first. Default answer before Wed: no. After Wed: change request (11.4). |
 | Demo breaks live | Medium | High | Run locally, reset button, rehearse twice on the phone, backup video |
-| **Phone-only demo fails to show** (hotspot link drops, mirroring fails, small screen hard to read for a room) | Medium | High | Test hotspot + mirroring in S5, not Wednesday morning; large text and big risk badges; fallbacks in 4.3 (Chrome phone-size view, then video) |
-| **Wednesday plan has almost no slack** (16h total, 1h buffer, build started Mon afternoon) | Medium | High | OQ-24; cut order starts at S6 then S4; feature freeze Tue 23:00 |
+| **Phone-only demo fails to show** (hotspot link drops, mirroring fails, small screen hard to read for a room) | Medium | High | **Still untested on a real phone as of v2.3:** run the hotspot + mirroring test tonight (Tue), not Wednesday morning; large text and big risk badges; fallbacks in 4.3 (Chrome phone-size view, then video) |
+| **Vercel link mistaken for the demo** (approvals, uploads and rule changes on Vercel vanish within minutes; preview links also need a Vercel login) | Medium | Medium | Demo runs on the laptop (5.1). Share the Vercel link only for looking at screens; turn off deployment protection if an outside person must open it |
+| ~~Wednesday plan has almost no slack~~ **Reduced (v2.3):** S0 to S6 are built; what is left is S7 (rehearsal, backup video) | Low | High | Feature freeze Tue 23:00; do the real-phone hotspot and mirroring test tonight, not Wednesday morning |
 | Auditing on a phone is slower for Finance at volume (small receipt images, one claim per screen) | Low (Finance also has desktop) | Medium | Desktop layout for heavy audit work; on phone, tap-to-zoom receipts and batch approve for Low risk |
 | Audience thinks the whole system is done | Medium | High | MOCK labels on screen, one opening sentence on "what is real today", Thread 01 handout |
 | Placeholder rules look wrong to a finance expert ("our meal limit isn't 300k") | High | Low | Say upfront they are examples; show that changing the config changes results live |
@@ -349,6 +371,10 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-28 | Wednesday demo runs entirely on a phone. Sprint plan re-timed (no stage had started by Mon 14:53); build rises from 13h to 14h; Tue budget 7h to 8h pending OQ-24, else S4 is cut. | Farrel chose a phone-only demo | Farrel (phone demo); Tue hours pending |
 | 2026-09-28 | Phase 1 estimate raised from 198 to 262h to 207 to 281h for the phone-first Finance dashboard. | Card queue, stacked detail and phone batch actions are extra layout work | Thread 00, pending Farrel review |
 | 2026-09-28 | v2.2: Finance screens get two first-class layouts, desktop and phone. Wednesday stays phone-only; the Finance screens are checked at laptop width in S6 if time allows. Effort unchanged. | Farrel: Finance team uses desktop also (OQ-25 closed) | Farrel |
+| 2026-09-29 | v2.3 correction: the v2.1 statement that no stage had started by Mon 14:53 was wrong (S0 and S1 existed on an unmerged build branch). 4.1 corrected; no schedule or scope change. | The plan under-counted progress because `main` had no build commits; found when the build branch was merged with `main` | Thread 02 (Build), pending Farrel review |
+| 2026-09-29 | S0 to S6 built and merged to `main` (commit 999dfeb). Nothing on the 4.3 cut list was cut; OQ-24 closed as moot. 4.4 added as build status. | Build ran ahead of the re-timed plan | Thread 02 (Build), pending Farrel review |
+| 2026-09-29 | A Vercel project (`claim-audit-app`) exists, deploying `main` and build branches, for viewing screens only. Not the demo machine; writes there are temporary. 5.1 updated. Reverses the 5.1 wording "no deploy". | Farrel asked for a Vercel demo build; SQLite cannot persist there | Farrel (requested); wording by Thread 02 |
+| 2026-09-29 | S6 was used for a QA and UX audit (docs/qa-audit.md) instead of open-ended polish; S7 prep is docs/demo-runbook.md. Demo runs with `npm run demo`. | Farrel asked for the audit; production build avoids first-load slowness | Farrel (audit); Thread 02 |
 
 ---
 

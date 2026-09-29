@@ -1,8 +1,10 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { UPLOAD_DIR, listEmployees, type NewClaim } from "./db";
-import { rulesConfig } from "./rules/config";
+import { UPLOAD_DIR, type NewClaim } from "./db";
+import { listEmployees, usingSupabase } from "./store";
+import { sb } from "./store-supabase";
+import { getEffectiveConfig } from "./settings";
 
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
@@ -12,15 +14,15 @@ export type SubmitErrors = Partial<Record<"employee" | "category" | "merchant" |
 const todayJakarta = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 
 /** Server-side validation for the demo submit form. Returns the claim (without receipt) or field errors. */
-export function parseClaimForm(f: FormData): { claim: Omit<NewClaim, "receipt_path" | "receipt_hash"> } | { errors: SubmitErrors } {
+export async function parseClaimForm(f: FormData): Promise<{ claim: Omit<NewClaim, "receipt_path" | "receipt_hash"> } | { errors: SubmitErrors }> {
   const e: SubmitErrors = {};
   const str = (k: string) => String(f.get(k) ?? "").trim();
 
   const employee_id = Number(str("employee"));
-  if (!listEmployees().some((x) => x.id === employee_id)) e.employee = "Choose who is submitting";
+  if (!(await listEmployees()).some((x) => x.id === employee_id)) e.employee = "Choose who is submitting";
 
   const category = str("category");
-  if (!(category in rulesConfig.categoryLimits)) e.category = "Choose a category";
+  if (!(category in (await getEffectiveConfig()).categoryLimits)) e.category = "Choose a category";
 
   const merchant = str("merchant");
   if (merchant.length < 2 || merchant.length > 80) e.merchant = "Enter the shop or vendor name (2 to 80 characters)";
@@ -51,7 +53,10 @@ export async function saveReceipt(file: File): Promise<{ path: string; hash: str
   const buf = Buffer.from(await file.arrayBuffer());
   const hash = crypto.createHash("sha256").update(buf).digest("hex");
   const name = `${hash}.${EXT[file.type]}`;
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
+  if (usingSupabase()) await sb.saveReceiptFile(name, buf, file.type);
+  else {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    fs.writeFileSync(path.join(UPLOAD_DIR, name), buf);
+  }
   return { path: `/api/receipts/${name}`, hash };
 }

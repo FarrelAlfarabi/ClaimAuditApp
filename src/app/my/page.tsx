@@ -16,12 +16,12 @@ export const dynamic = "force-dynamic";
 export default async function MyClaims({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await requirePageRole("employee");
   // Signed in: only this employee's claims. Without login: every demo submission.
-  const mine = getAuditedClaims().filter((c) => c.source === "demo" && (!me.employeeId || c.employee_id === me.employeeId)).sort((a, b) => b.id - a.id);
+  const mine = (await getAuditedClaims()).filter((c) => c.source === "demo" && (!me.employeeId || c.employee_id === me.employeeId)).sort((a, b) => b.id - a.id);
   const f = readFilters(await searchParams);
   const shown = applyFilters(mine, f);
   const options = {
     statuses: ["pending", "approved", "rejected"],
-    categories: Object.keys(getEffectiveConfig().categoryLimits).sort(),
+    categories: Object.keys((await getEffectiveConfig()).categoryLimits).sort(),
     risk: true, flags: true, receipt: true, dates: true, amounts: true, sort: true, time: true, day: true, hitCount: true,
   };
   return (

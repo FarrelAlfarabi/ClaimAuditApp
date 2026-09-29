@@ -11,5 +11,9 @@ npm run demo    # production build + start, reachable from a phone on the same n
 npm test        # rules engine tests
 ```
 
+Data: claims live in Supabase Postgres when login is on; local SQLite when `AUTH_DISABLED=1`.
+Database setup (already applied to the demo project): `supabase/migrations/*.sql`, then `supabase/seed.sql`
+(regenerate with `npm run seed && npm run seed:sql`).
+
 All org data, limits and hours are MOCK placeholders (`config/rules.config.json`).
 Planted problem answer key: `tests/fixtures/seed-expected.json`.

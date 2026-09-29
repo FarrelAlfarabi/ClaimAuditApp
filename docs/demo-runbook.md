@@ -4,7 +4,7 @@ Everything below is MOCK data. Say so in the first minute.
 
 ## Tonight (Tue): must do before Wednesday
 
-0. **Login setup (once).** Copy `.env.example` to `.env.local` and put the demo password (from Claude's message; not in git) after `DEMO_PASSWORD=`. With login on, **the laptop needs internet for the whole demo** (every page checks the session with Supabase), so the phone hotspot must have mobile data, not just Wi-Fi between the two devices.
+0. **Login setup (once).** Copy `.env.example` to `.env.local` and put the demo password (from Claude's message; not in git) after `DEMO_PASSWORD=`. With login on, **the laptop needs internet for the whole demo**: every page checks the session with Supabase and now also reads and writes the claims there, so the phone hotspot must have mobile data, not just Wi-Fi between the two devices.
 1. Phone hotspot ON (with mobile data). Laptop joins the phone's hotspot.
 2. On the laptop: `npm install` (once), then `npm run seed` then `npm run demo`. Note the laptop's IP (`ipconfig` / `ifconfig`, e.g. 172.20.10.2).
 3. On the phone browser: `http://<laptop-ip>:3000`. You land on **Sign in**. Tap **Finance** (quick demo sign-in). Check: queue loads, a claim opens. Sign out, tap **Employee**, check a photo upload works. This is the first time login is tested against the real Supabase project: if it fails, see "If something breaks".
@@ -26,7 +26,7 @@ Everything below is MOCK data. Say so in the first minute.
 
 ## If something breaks
 
-- **"Cannot reach the login service", or you keep landing on Sign in:** the hotspot has no mobile data or Supabase is down. Stop the server (Ctrl+C) and restart with login off: `AUTH_DISABLED=1 npm run demo` (Windows PowerShell: `$env:AUTH_DISABLED=1; npm run demo`). The Employee / Finance switcher comes back. Everything else works the same. Say "login is switched off for the demo network".
+- **"Cannot reach the login service", "Something went wrong" on every screen, or you keep landing on Sign in:** the hotspot has no mobile data or Supabase is down. Stop the server (Ctrl+C), run `npm run seed` once, then restart with `AUTH_DISABLED=1 npm run demo` (Windows PowerShell: `$env:AUTH_DISABLED=1; npm run demo`). The app then runs fully offline from local SQLite with the Employee / Finance switcher. Same screens, same 80 claims, but separate data from Supabase. Say "login and the online database are switched off for the demo network".
 
 - Phone cannot reach laptop: use Chrome on the laptop in phone view (DevTools device mode, iPhone 14), same URL on localhost.
 - App error or wrong data: Rules tab > Reset demo data, or stop the server and run `npm run seed && npm run demo`.

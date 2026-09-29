@@ -20,9 +20,9 @@ const uniq = (a: string[]) => [...new Set(a)].sort();
 export default async function AllClaims({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requirePageRole("finance");
   const f = readFilters(await searchParams);
-  const all = getAuditedClaims().sort((a, b) => a.id - b.id);
+  const all = (await getAuditedClaims()).sort((a, b) => a.id - b.id);
   const claims = applyFilters(all, f);
-  const config = getEffectiveConfig();
+  const config = await getEffectiveConfig();
   const options = {
     categories: uniq(all.map((c) => c.category)),
     departments: uniq(all.map((c) => c.department_name)),

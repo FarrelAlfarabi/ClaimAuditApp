@@ -1,4 +1,4 @@
-import { deleteSetting, getSetting, putSetting } from "./db";
+import { deleteSetting, getSetting, putSetting } from "./store";
 import { rulesConfig } from "./rules/config";
 import type { RulesConfig } from "./rules/engine";
 
@@ -8,8 +8,8 @@ export type EditableRules = Pick<RulesConfig, "categoryLimits" | "nearLimitPct" 
 const KEY = "rules_override";
 
 /** File defaults (config/rules.config.json) with any Settings-screen changes on top. */
-export function getEffectiveConfig(): RulesConfig {
-  const o = getSetting<EditableRules>(KEY);
+export async function getEffectiveConfig(): Promise<RulesConfig> {
+  const o = await getSetting<EditableRules>(KEY);
   if (!o) return rulesConfig;
   return {
     ...rulesConfig,
@@ -19,7 +19,7 @@ export function getEffectiveConfig(): RulesConfig {
   };
 }
 
-export const isCustomized = () => getSetting(KEY) !== undefined;
+export const isCustomized = async () => (await getSetting(KEY)) !== undefined;
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -37,10 +37,10 @@ export function validateRules(r: EditableRules): Record<string, string> | null {
   return Object.keys(e).length ? e : null;
 }
 
-export function saveRules(r: EditableRules) {
-  putSetting(KEY, r);
+export async function saveRules(r: EditableRules) {
+  await putSetting(KEY, r);
 }
 
-export function resetRules() {
-  deleteSetting(KEY);
+export async function resetRules() {
+  await deleteSetting(KEY);
 }

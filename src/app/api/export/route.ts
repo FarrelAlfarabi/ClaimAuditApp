@@ -11,7 +11,7 @@ const cell = (v: unknown) => {
 /** Verified (approved) claims as CSV. UTF-8 BOM + CRLF so Excel opens it cleanly with the right encoding. */
 export async function GET() {
   if ((await getSessionUser())?.role !== "finance") return new Response("Forbidden", { status: 403 });
-  const rows = getAuditedClaims()
+  const rows = (await getAuditedClaims())
     .filter((c) => c.audit_status === "approved")
     .sort((a, b) => a.id - b.id);
   const header = [

@@ -19,7 +19,7 @@ const uniq = (a: string[]) => [...new Set(a)].sort();
 export default async function Queue({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requirePageRole("finance");
   const f = readFilters(await searchParams);
-  const all = getAuditedClaims();
+  const all = await getAuditedClaims();
   const claims = applyFilters(all, f);
   const counts = (["High", "Medium", "Low"] as RiskLevel[]).map((r) => ({ r, n: all.filter((c) => c.risk === r).length }));
   const approved = all.filter((c) => c.audit_status === "approved").length;

@@ -1,15 +1,24 @@
-import { listClaims, type ClaimRow } from "./db";
-import { auditAll, type AuditResult, type RiskLevel } from "./rules/engine";
+import { listClaims, dupKeys, type ClaimRow } from "./store";
+import { auditAll, type AuditResult, type EngineClaim, type RiskLevel } from "./rules/engine";
 import { getEffectiveConfig } from "./settings";
 
 export type AuditedClaim = ClaimRow & AuditResult;
 
 export const RISK_ORDER: Record<RiskLevel, number> = { High: 0, Medium: 1, Low: 2 };
 
-/** All claims with engine results: undecided first, then riskiest (score desc), then oldest id. */
-export function getAuditedClaims(): AuditedClaim[] {
-  const rows = listClaims();
-  const results = auditAll(rows, getEffectiveConfig());
+/**
+ * All claims this user may see, with engine results: undecided first, then riskiest (score desc), then oldest id.
+ * Employees can only read their own rows, but a duplicate must be found against everyone's claims: the database
+ * hands back the few fields the duplicate check needs (never names or notes) and they join the check as stubs.
+ */
+export async function getAuditedClaims(): Promise<AuditedClaim[]> {
+  const [rows, cfg, keys] = await Promise.all([listClaims(), getEffectiveConfig(), dupKeys()]);
+  const own = new Set(rows.map((r) => r.id));
+  const stubs: EngineClaim[] = keys
+    .filter((k) => !own.has(k.id))
+    .map((k) => ({ id: k.id, category: "", merchant: k.merchant, amount: k.amount, transaction_date: k.transaction_date,
+      transaction_time: null, receipt_path: null, receipt_hash: k.receipt_hash }));
+  const results = auditAll([...rows, ...stubs], cfg).slice(0, rows.length); // stubs only feed the duplicate index
   return rows
     .map((r, i) => ({ ...r, ...results[i] }))
     .sort(

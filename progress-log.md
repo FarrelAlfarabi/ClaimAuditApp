@@ -221,3 +221,28 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 - Finance (queue and All claims): filter by submitting employee, manager (MOCK), and the Finance user who decided (or "decided without login"); plus number of flags, weekday/weekend, time entered or not, sample vs demo-submitted. New sorts: recently submitted, recently decided. Search also matches manager and decider.
 - Employee My claims: search and filters now always visible (were hidden until the first claim); added risk, flag, number of flags, weekday/weekend, time entered. Employees never see other people's claims or the people filters.
 - Verified (production build, 390 px): Andi 4, Rina's team 30, no flags 60, weekend 5, time entered 42, decided without login 1; filter sheet with dropdowns works; axe 0 on queue and open sheet; employee search and category filter correct; 0 JS errors.
+
+## 2026-09-29 ~18:10 WIB | Repo check + claims saved in Supabase (master-plan v2.6) | 100% built; real-internet test 0% | Blocker: this environment cannot reach supabase.co, so the app has not been run against the real project | ~5h to the Tue 23:00 freeze
+
+**Repo check (asked by Farrel):** `main` = `bda7a41` (OCR preview removed), identical to the build branch before this work. Nobody else has pushed. Everything from S0 to the search/filters and Coming tab is on `main`. Earlier plan status rows saying v2.4/v2.5 were "not on main" were stale; fixed in v2.6.
+
+**Asked:** save claims to a database, applied in Supabase.
+
+**What changed and why**
+- Database on the real Supabase project (`ruangguru-claim-audit-demo`): tables `departments`, `employees`, `claims`, `settings`, a pristine copy `claims_seed`, and a private `receipts` bucket. Migrations `0001_claims.sql`, `0002_pin_helper_search_path.sql`; data `supabase/seed.sql` (80 claims, 12 employees, 3 departments, generated from the same seed the tests use).
+- Security: row level security on every table. Finance reads all claims; an employee reads only their own. Every write (submit, decide, undo, batch approve, rules, reset) goes through a database function that checks the caller's role again; the API has no direct write access to tables. The duplicate check for an employee sees only amount, date, merchant and receipt fingerprint of other people's claims.
+- App: one data layer (`src/lib/store.ts`) with two backends. Supabase when login is on; local SQLite when `AUTH_DISABLED=1`, the offline fallback. Receipt photos go to the private bucket and are served only to signed-in users.
+- Bug found and fixed while testing: after "Approve all", the bar disappeared at once, so no confirmation was ever shown (introduced in S6). It now shows "Approved N Low-risk claims."
+- Found before applying: Finance could not delete receipt files (reset would leave photos) and re-uploading an identical photo would need an update permission. Fixed in the migration.
+- Security advisor on the real project: fixed the two helper functions with a mutable search path. Remaining warnings are intentional (signed-in users may call the role-checked functions; `claims_seed` has no policies on purpose). **Not fixed: "leaked password protection" is off.** That is an Auth setting in the Supabase dashboard (may need a paid plan); it matters for real users, not for two MOCK demo accounts.
+
+**Verified**
+- On the real project (SQL run as each role, changes rolled back): Finance sees 80 claims, decides once and a second decision returns 0; an employee sees 4 (their own) and 0 of others', can submit as themselves only; employee cannot decide, reset or change rules; Finance cannot submit; direct table updates, deletes and inserts change 0 rows or are blocked; a user with no role sees 0 claims; anonymous is blocked from claims, the view and the functions.
+- The app against a real Postgres built from the committed migration files, behind a local stand-in for the Supabase gateway: 12 of 12 checks (finance queue 80, reject and approve saved with who decided, batch approve 60, rules saved and reset, CSV 61 rows, employee submit with photo shows High with 2 reasons incl. duplicate against another person's claim, employee sees only own, employee blocked from Finance pages, receipt visible to Finance, reset back to 80). No JS errors.
+- Offline fallback `AUTH_DISABLED=1`: all filter and people-filter checks still pass. 16/16 engine tests, tsc and eslint clean.
+
+**Not verified:** the app against the real Supabase over the internet (real sign-in, real storage upload); storage permissions on the real bucket (created and policies written, not exercised); Vercel with the new backend.
+
+**Decisions:** claims are stored in Supabase, replacing the v2.4 decision to keep them local (Farrel's request). This is pushed to the build branch only, not `main`, so Farrel can try the Vercel preview first.
+
+**Risks:** every screen now needs internet, not just login. Free Supabase projects pause after a week idle. If the hotspot has no mobile data, use the offline fallback (runbook).

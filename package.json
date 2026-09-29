@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
-    "demo": "npm run build && next start -H 0.0.0.0"
+    "demo": "npm run build && next start -H 0.0.0.0",
+    "seed:sql": "tsx scripts/seed-sql.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

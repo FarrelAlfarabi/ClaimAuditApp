@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Done({ params }: { params: Promise<{ id: string }> }) {
   const me = await requirePageRole("employee");
   const id = Number((await params).id);
-  const c = getAuditedClaims().find((x) => x.id === id);
+  const c = (await getAuditedClaims()).find((x) => x.id === id);
   if (!c || c.source !== "demo" || (me.employeeId && c.employee_id !== me.employeeId)) notFound();
   return (
     <div className="space-y-4">

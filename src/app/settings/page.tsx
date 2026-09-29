@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   await requirePageRole("finance");
-  const c = getEffectiveConfig();
+  const c = await getEffectiveConfig();
   return (
     <div className="space-y-4">
       <div>
@@ -18,7 +18,7 @@ export default async function SettingsPage() {
       </div>
       <RulesForm
         initial={{ categoryLimits: c.categoryLimits, nearLimitPct: c.nearLimitPct, workingHours: c.workingHours }}
-        customized={isCustomized()}
+        customized={await isCustomized()}
       />
       <ResetDemo />
     </div>

@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.5
+**Version:** 2.6
 **Date:** 29 Sep 2026 (Tue)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
 **Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v2.6:** claims data now lives in Supabase Postgres, as Farrel asked ("save claims to database, apply in supabase"). Reverses the v2.4 decision that data stays in local SQLite. Claims, employees, rule changes and receipt photos are stored in the Supabase project; the database itself decides who may read or write (row level security plus role-checked functions). Local SQLite stays as the offline fallback (`AUTH_DISABLED=1`). Also corrected stale status rows (v2.4 and v2.5 work is on `main`). Changed: 4.4, 5.1, 6.2 (OQ-27), 7, 8.
 
 **What changed in v2.5:** (1) Search and full filters on every list: Finance queue, All claims, My claims. Free-text search (claim #, employee, merchant, category, flag reasons), filters for risk, flag type, audit status, category, department, receipt, date range and amount range, five sort orders, removable filter chips, all kept in the link so a view can be shared. (2) A "Coming" tab with 10 static preview screens of planned features (Phase 1 and 2), each marked "DEMO PREVIEW · NOT WORKING YET" with disabled buttons. (3) A design brief for a Ruangguru-consistent visual refresh without Ruangguru logos or names (docs/design-prompt.md). Changed: 2.1, 4.4, 7, 8.
 
@@ -216,8 +218,9 @@ Source of truth for each stage's detail is progress-log.md; QA findings are in d
 | S5 | Built, merged | Submit form with photo, role switcher, reset. **Phone hotspot and mirroring not yet tested on a real phone (OQ-23)** |
 | S6 | Built (used for a QA and UX audit), merged | Offline-safe actions, double-submit lock, decision conflicts, dialog accessibility, 44 px touch targets |
 | S7 | Prep done (v2.4); rehearsals not done | Backup video (62 s, phone size, captions) recorded by Claude against a local login stand-in; runbook updated for login. Still needs Farrel's phone: hotspot test, first real sign-in, 2 rehearsals |
-| Search and filters, Coming previews (v2.5) | Built, not yet on `main` | Tested at 390 px: search, each filter, sort, chip removal, empty states; axe 0 violations on the new screens |
-| Login (v2.4) | Built, **not yet on `main`** until Farrel says so | Tested against a local stand-in for Supabase; first real sign-in against the Supabase project not yet done |
+| Search and filters, Coming previews (v2.5) | Built, on `main` | Tested at 390 px: search, each filter, sort, chip removal, empty states; axe 0 violations on the new screens |
+| Login (v2.4) | Built, on `main` | Tested against a local stand-in for Supabase; first real sign-in against the real Supabase project not yet done |
+| Claims in Supabase (v2.6) | Built; on the build branch, not yet on `main` | Schema, security rules and 80 seed claims applied to the real project; permissions tested on the real project by running queries as each role; the app itself tested against a real Postgres with a local stand-in gateway. **Not yet tested: the app against the real Supabase over the internet** |
 
 Open risks that can still break Wednesday: first real Supabase sign-in untested; login needs internet for the whole demo; real-phone hotspot and mirroring (OQ-23), OQ-01 (demo time and format), OQ-02 (what Wednesday must decide). CSV download and photo upload on a real iPhone are untested.
 
@@ -235,12 +238,12 @@ Picked for speed with Farrel's existing React/Vercel experience.
 |---|---|---|
 | App | Next.js (App Router) + TypeScript | One codebase for UI and API routes. Heavier than a pure SPA but no separate backend. |
 | UI | Tailwind + shadcn/ui, phone-first layouts (cards, bottom sheets, bottom tabs) | Fast, clean components. Tables become cards on phones; more layout work than a desktop table. |
-| Data | SQLite via better-sqlite3, seed script | Zero setup. Vercel's file system is read-only, so on Vercel the app copies the database to a temporary folder: approvals, uploads and rule changes there vanish within minutes and are not shared between server instances. A Vercel preview and production project exist (v2.3) for looking at the screens only; they are not the demo machine. Replaced by Postgres in Phase 1 (5.4). |
+| Data | Supabase Postgres when login is on (tables `claims`, `employees`, `departments`, `settings`; private storage bucket `receipts`); local SQLite (`data/claims.db`) when `AUTH_DISABLED=1` | Every page now reads the database over the internet, so a dropped connection breaks every screen, not just login: the offline fallback (`AUTH_DISABLED=1`, separate local data) exists for that. Reads follow the signed-in user: Finance sees all claims, an employee only their own. Writes go through database functions that check the role again. The database schema is in `supabase/migrations`, the seed in `supabase/seed.sql`. On Vercel the data is now shared and lasts (the earlier "vanishes in minutes" limit no longer applies when login is on). Free plan: the project pauses after a week of inactivity; open it before Wednesday. |
 | Receipts | Static placeholder images in `/public/mock-receipts` for seed claims; photos uploaded through the demo submit form are saved on the laptop's disk (`data/uploads`), named by their SHA-256 hash so an identical file triggers the file-hash duplicate rule | Demo only: no retention policy, no access control. Real storage is a Phase 1 decision (5.4). |
 | Engine | Pure TypeScript functions, input = claim + config, output = rule hits + score | Easy to unit test; carries into Phase 1 unchanged. |
 | Config | `rules.config.json` (limits per category, near-limit %, working hours, score weights) | Editable without code change. No audit trail of config changes yet. |
 | Demo delivery | App runs on Farrel's laptop; the phone opens it over the phone's own hotspot (laptop joins the hotspot); phone screen mirrored to the laptop for the audience | No venue Wi-Fi and no deploy needed. Run with `npm run demo` (production build; `npm run dev` recompiles pages on first visit and is slower). Run `npm run seed` once beforehand; restarting `npm run dev` or re-seeding wipes all demo data. Adds a phone-to-laptop link that has still not been tested on a real phone (OQ-23). Backups: Chrome phone-size view, then recorded video. |
-| Auth | Supabase Auth (project `ruangguru-claim-audit-demo`, Singapore region, free plan), email + password, roles in `app_metadata`; kill switch back to the role switcher | Needs internet for every page load while login is on. Only login lives in Supabase; claims data stays in local SQLite. Two MOCK accounts, no real people. Region choice is not a decision for Phase 1 (OQ-09). |
+| Auth | Supabase Auth (project `ruangguru-claim-audit-demo`, Singapore region, free plan), email + password, roles in `app_metadata`; kill switch back to the role switcher | Needs internet for every page load while login is on. Two MOCK accounts, no real people. Region choice is not a decision for Phase 1 (OQ-09). |
 
 ### 5.3 Risk scoring (placeholder, config-driven)
 
@@ -330,6 +333,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | ~~OQ-24~~ | ~~Can Farrel give Tuesday 8 hours instead of 7? If not, the settings screen (S4) is cut.~~ **Moot (v2.3):** S4 was built. Hours actually spent are not recorded; Farrel to note them in progress-log.md if he wants the effective rate (1.3) tracked. | Farrel | Closed |
 | ~~OQ-25~~ | ~~Does Finance audit on phones, or was "mobile" meant for employees?~~ **Answered (Farrel, 28 Sep):** Finance uses both phone and desktop. Both Finance layouts are in Phase 1 (12.1). | Farrel | Closed |
 | OQ-26 | Does the demo phone's hotspot have reliable mobile data at the venue? Login needs internet for the whole demo. | Farrel | **Wednesday** (else run with `AUTH_DISABLED=1`) |
+| OQ-27 | Data location for Phase 1: the demo project is in Singapore (ap-southeast-1). Does Ruangguru accept that region for employee data (UU PDP, OQ-09)? | Ruangguru IT / legal | Stage 1 exit (extends OQ-09) |
 
 ---
 
@@ -343,6 +347,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | **Phone-only demo fails to show** (hotspot link drops, mirroring fails, small screen hard to read for a room) | Medium | High | **Still untested on a real phone as of v2.3:** run the hotspot + mirroring test tonight (Tue), not Wednesday morning; large text and big risk badges; fallbacks in 4.3 (Chrome phone-size view, then video) |
 | **Vercel link mistaken for the demo** (approvals, uploads and rule changes on Vercel vanish within minutes; preview links also need a Vercel login) | Medium | Medium | Demo runs on the laptop (5.1). Share the Vercel link only for looking at screens; turn off deployment protection if an outside person must open it |
 | **Login fails live** (no mobile data, Supabase down, first real sign-in never tested) | Medium | High | Test the real sign-in tonight; the runbook's kill switch `AUTH_DISABLED=1` restores the no-login demo in about 30 seconds; backup video |
+| **Online database fails live, or is paused** (every screen depends on Supabase; free projects pause after a week idle; the app has never been run against the real project over the internet from the build environment) | Medium | High | Sign in and tap through tonight; keep the project active; `AUTH_DISABLED=1` runs the whole demo offline from local data (run `npm run seed` first); backup video |
 | **Login added one day before the demo** (new code path on every page) | Medium | Medium | Tested locally (13 login checks + failure modes); decision made knowingly by Farrel; freeze at Tue 23:00 still holds |
 | **Preview screens read as promises** (the audience assumes previewed features are built, or quoted in the price) | Medium | High | Loud banner on every preview, disabled buttons, separate tab; say out loud "these are pictures of Phase 1 and 2, not built and not priced"; skip the tab if the room is price-focused |
 | ~~Wednesday plan has almost no slack~~ **Reduced (v2.3):** S0 to S6 are built; what is left is S7 (rehearsal, backup video) | Low | High | Feature freeze Tue 23:00; do the real-phone hotspot and mirroring test tonight, not Wednesday morning |
@@ -390,6 +395,8 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-29 | S6 was used for a QA and UX audit (docs/qa-audit.md) instead of open-ended polish; S7 prep is docs/demo-runbook.md. Demo runs with `npm run demo`. | Farrel asked for the audit; production build avoids first-load slowness | Farrel (audit); Thread 02 |
 | 2026-09-29 | Real login (Supabase Auth) added to the Wednesday demo; role switcher kept only as a kill switch. Reverses the 2026-09-28 row "auth fully mocked for Wed". | Farrel: "create user login, use supabase" | Farrel |
 | 2026-09-29 | Supabase used for login only for Wednesday; claims data stays in local SQLite. Moving data to Supabase Postgres stays a Phase 1 item (5.4). | Moving the data layer one day before the demo is a rewrite that could not be tested from the build environment, and would make every screen depend on the internet | Thread 02 (Build), pending Farrel review |
+| 2026-09-29 | v2.6: claims, employees, rule changes and receipt photos are saved in Supabase Postgres and Storage; SQLite stays as the offline fallback. Reverses the row above ("login only"). | Farrel: "add save claims to database (apply in supabase)" | Farrel |
+| 2026-09-29 | Database security: employees can read only their own claims; Finance reads all; all writes go through role-checked functions; the API has no direct write access to tables; the duplicate check reads only amount, date, merchant and receipt fingerprint of other people's claims. Checked by running queries as finance, employee, no-role and anonymous users on the real project. | Claims include personal-looking data even when mock; Phase 1 will need the same shape | Thread 02, pending Farrel review |
 | 2026-09-29 | New Supabase project `ruangguru-claim-audit-demo` (Singapore, free plan), separate from other clients' projects. Two MOCK accounts: finance.demo@example.com, employee.demo@example.com. | Keep client data apart; demo only, no real people | Thread 02, pending Farrel review |
 | 2026-09-29 | Note on the rule "no Phase 1 code before signed SOW": the login is demo scaffolding (two MOCK accounts, no user management), not the Phase 1 login item (2.2 item 5), which is still unbuilt and unpriced. | Keep the no-free-work rule honest | Thread 02, pending Farrel review |
 | 2026-09-29 | v2.5: search and complete filters on every claim list; static "Coming" preview screens for 10 planned features, labeled not working. | Farrel asked | Farrel |

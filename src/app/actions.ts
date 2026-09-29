@@ -7,7 +7,7 @@ import { ROLE_COOKIE, requireRole, type Role } from "@/lib/role";
 import { DEMO_ACCOUNTS, authEnabled, quickLoginEnabled } from "@/lib/auth/config";
 import { supabaseServer } from "@/lib/auth/server";
 import { parseClaimForm, saveReceipt, type SubmitErrors } from "@/lib/submit";
-import { approveMany, insertClaim, resetDemoData, setAuditDecision, undoAuditDecision } from "@/lib/db";
+import { approveMany, insertClaim, resetDemoData, setAuditDecision, undoAuditDecision } from "@/lib/store";
 import { getAuditedClaims } from "@/lib/audit";
 import { rejectionReasons } from "@/lib/rules/config";
 import { resetRules, saveRules, validateRules, type EditableRules } from "@/lib/settings";
@@ -23,7 +23,7 @@ const ALREADY = "This claim was already decided (maybe on another screen). Showi
 
 export async function approveClaim(id: number): Promise<DecisionResult> {
   const me = await requireRole("finance");
-  const n = setAuditDecision(id, "approved", null, null, me.email);
+  const n = await setAuditDecision(id, "approved", null, null, me.email);
   refresh(id);
   return n ? { ok: true } : { ok: false, message: ALREADY };
 }
@@ -31,22 +31,22 @@ export async function approveClaim(id: number): Promise<DecisionResult> {
 export async function rejectClaim(id: number, reason: string, note: string): Promise<DecisionResult> {
   const me = await requireRole("finance");
   if (!rejectionReasons.includes(reason)) return { ok: false, message: "Pick one of the listed reasons." };
-  const n = setAuditDecision(id, "rejected", reason, note.trim().slice(0, 300) || null, me.email);
+  const n = await setAuditDecision(id, "rejected", reason, note.trim().slice(0, 300) || null, me.email);
   refresh(id);
   return n ? { ok: true } : { ok: false, message: ALREADY };
 }
 
 export async function undoDecision(id: number) {
   await requireRole("finance");
-  undoAuditDecision(id);
+  await undoAuditDecision(id);
   refresh(id);
 }
 
 /** Approves every pending claim the engine currently rates Low. Computed on the server, not trusted from the client. */
 export async function batchApproveLow() {
   const me = await requireRole("finance");
-  const ids = getAuditedClaims().filter((c) => c.risk === "Low" && c.audit_status === "pending").map((c) => c.id);
-  const n = approveMany(ids, me.email);
+  const ids = (await getAuditedClaims()).filter((c) => c.risk === "Low" && c.audit_status === "pending").map((c) => c.id);
+  const n = await approveMany(ids, me.email);
   refresh();
   return n;
 }
@@ -57,7 +57,7 @@ export async function saveRulesAction(r: EditableRules): Promise<SaveRulesResult
   await requireRole("finance");
   const errors = validateRules(r);
   if (errors) return { ok: false, errors };
-  saveRules(r);
+  await saveRules(r);
   refresh();
   revalidatePath("/settings");
   return { ok: true };
@@ -65,7 +65,7 @@ export async function saveRulesAction(r: EditableRules): Promise<SaveRulesResult
 
 export async function resetRulesAction() {
   await requireRole("finance");
-  resetRules();
+  await resetRules();
   refresh();
   revalidatePath("/settings");
 }
@@ -77,7 +77,7 @@ export async function submitClaimAction(f: FormData): Promise<SubmitState> {
   const me = await requireRole("employee");
   // A signed-in employee always submits as their own (MOCK) employee record; the picker only exists without login.
   if (me.employeeId) f.set("employee", String(me.employeeId));
-  const parsed = parseClaimForm(f);
+  const parsed = await parseClaimForm(f);
   if ("errors" in parsed) return { errors: parsed.errors };
   let receipt_path: string | null = null;
   let receipt_hash: string | null = null;
@@ -88,7 +88,7 @@ export async function submitClaimAction(f: FormData): Promise<SubmitState> {
     receipt_path = saved.path;
     receipt_hash = saved.hash;
   }
-  const id = insertClaim({ ...parsed.claim, receipt_path, receipt_hash });
+  const id = await insertClaim({ ...parsed.claim, receipt_path, receipt_hash });
   refresh();
   return { doneId: id }; // client navigates; a redirect here could not be told apart from a network failure
 }
@@ -100,7 +100,7 @@ export async function setRoleAction(role: Role) {
 
 export async function resetDemoAction() {
   await requireRole("finance");
-  resetDemoData();
+  await resetDemoData();
   refresh();
   revalidatePath("/settings");
 }

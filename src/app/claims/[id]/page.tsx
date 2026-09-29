@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function ClaimDetail({ params }: { params: Promise<{ id: string }> }) {
   await requirePageRole("finance");
   const id = Number((await params).id);
-  const all = getAuditedClaims();
+  const all = await getAuditedClaims();
   const c = all.find((x) => x.id === id);
   if (!c) notFound();
   const nextId = all.find((x) => x.id !== id && x.audit_status === "pending")?.id ?? null;

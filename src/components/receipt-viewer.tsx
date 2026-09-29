@@ -13,6 +13,12 @@ export function ReceiptViewer({ src }: { src: string | null }) {
     const el = img.current;
     if (el?.complete) setState(el.naturalWidth > 0 ? "ok" : "error");
   }, [src]);
+  useEffect(() => {
+    if (!zoom) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setZoom(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [zoom]);
 
   if (!src)
     return (
@@ -37,7 +43,7 @@ export function ReceiptViewer({ src }: { src: string | null }) {
         </span>
       </button>
       {zoom && (
-        <button type="button" onClick={() => setZoom(false)}
+        <button type="button" autoFocus onClick={() => setZoom(false)}
           className="fixed inset-0 z-40 flex items-center justify-center bg-black/90 p-4" aria-label="Close receipt">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={src} alt="Receipt full size" className="max-h-full max-w-full object-contain" />

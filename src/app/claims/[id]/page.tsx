@@ -29,12 +29,12 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-4">
-      <Link href="/" className="inline-flex h-10 items-center text-sm text-muted-foreground">← Back to queue</Link>
+      <Link href="/" className="-ml-2 inline-flex h-11 items-center px-2 text-sm text-muted-foreground">← Back to queue</Link>
 
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs text-muted-foreground">Claim #{c.id}</div>
-          <div className="text-2xl font-bold tabular-nums">{idr(c.amount)}</div>
+          <h1 className="text-2xl font-bold tabular-nums"><span className="sr-only">Claim {c.id}, </span>{idr(c.amount)}</h1>
         </div>
         <RiskBadge risk={c.risk} className="px-4 py-1.5 text-base" />
       </div>

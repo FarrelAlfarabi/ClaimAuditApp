@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { resetRulesAction, saveRulesAction } from "@/app/actions";
 import type { EditableRules } from "@/lib/settings";
+import { safe } from "@/lib/safe-action";
 
 const digits = (s: string) => s.replace(/\D/g, "");
 const grouped = (n: number | string) => (n === "" ? "" : Number(n).toLocaleString("id-ID"));
@@ -30,7 +31,9 @@ export function RulesForm({ initial, customized }: { initial: EditableRules; cus
         nearLimitPct: pct === "" ? NaN : Number(pct) / 100,
         workingHours: { start, end },
       };
-      const res = await saveRulesAction(r);
+      let net: string | undefined;
+      const res = await safe(() => saveRulesAction(r), (m) => (net = m));
+      if (!res) { setErrors({}); setMsg(net); return; }
       if (res.ok) { setErrors({}); setMsg("Saved. The audit queue now uses these rules."); }
       else { setErrors(res.errors); setMsg("Not saved. Fix the fields marked in red."); }
     });
@@ -87,11 +90,11 @@ export function RulesForm({ initial, customized }: { initial: EditableRules; cus
         </div>
       </fieldset>
 
-      {msg && <p role="status" className={`text-sm ${Object.keys(errors).length ? "text-red-700" : "text-emerald-800"}`}>{msg}</p>}
+      {msg && <p role="status" className={`text-sm ${msg.startsWith("Saved") ? "text-emerald-800" : "text-red-700"}`}>{msg}</p>}
 
       <div className="grid grid-cols-2 gap-3">
         <button type="button" disabled={busy || !customized}
-          onClick={() => { if (confirm("Reset all rules to the default example values?")) go(async () => { await resetRulesAction(); location.reload(); }); }}
+          onClick={() => { if (confirm("Reset all rules to the default example values?")) go(async () => { let ok = true; await safe(resetRulesAction, (m) => { ok = false; setMsg(m); }); if (ok) location.reload(); }); }}
           className="h-12 rounded-xl border text-sm font-medium disabled:opacity-40">Reset to defaults</button>
         <button type="submit" disabled={busy}
           className="h-12 rounded-xl bg-foreground text-sm font-medium text-background disabled:opacity-50">

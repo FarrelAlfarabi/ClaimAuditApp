@@ -51,7 +51,7 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{claims.length} of {all.length} claims</span>
         <div className="flex gap-2">
-          <a href="/api/export" className="flex h-10 items-center rounded-full border bg-background px-4 text-sm font-medium">
+          <a href="/api/export" className="flex h-11 items-center rounded-full border bg-background px-4 text-sm font-medium" download>
             Export CSV ({approved})
           </a>
           <FilterSheet options={options} current={f} />

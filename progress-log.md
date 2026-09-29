@@ -158,3 +158,22 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 - iPhone HEIC photos: Safari normally converts to JPEG when uploading; if not, the server rejects with a clear message. Untested on a real iPhone.
 - One 500 error ("Unexpected end of JSON input") appeared once on the result page during a dev-server recompile; the same page then loaded fine 4 times. To be re-checked on a production build in S6.
 - My claims shows all demo submissions (no login), labeled "Submitted in this demo".
+
+## 2026-09-29 | S6 | 100% of S6 (S0 to S6 about 13.5h of the 14h build plan by estimate; actual hours not measurable from the repo) | Blocker for demo readiness: real phone + hotspot + mirroring untested (OQ-23) | Feature freeze Tue 23:00
+
+**What happened:** S6 was used for a full QA and UX audit (asked for by Farrel) instead of open-ended polish. Report: `docs/qa-audit.md`. Demo runbook for S7: `docs/demo-runbook.md`.
+
+**Fixed (details and re-tests in docs/qa-audit.md)**
+- Critical: a dropped connection during any save crashed the whole app. Now an inline "Could not reach the server… Nothing was saved." with values kept, plus an app-level error screen.
+- High: triple tap on Submit created 3 claims (now 1). Two screens deciding the same claim overwrote each other silently (now the second is told and refreshed).
+- Medium: filter sheet is now a proper dialog (focus, Escape, scroll lock); touch targets raised to 44 px; styled Not found page.
+- Low: detail page heading for screen readers; Escape closes receipt zoom; focus moves to the error summary on a failed submit.
+- New `npm run demo`: production build reachable from the phone. Use it on Wednesday instead of `npm run dev` (faster first loads, no dev recompiles).
+
+**Verified:** production build with Vercel `/tmp` storage simulated. No sideways scrolling at 320 to 1280 px; axe 0 violations after fixes; offline, double-tap, conflict, bad-input, wrong-file and not-found cases all behave; 8/8 production submits OK; 16/16 engine tests pass. Laptop width (1280) checked for Finance queue and detail (receipt beside data).
+
+**Not verified:** real phone, hotspot, mirroring, iPhone photo format, CSV on iPhone, real Excel, screen readers.
+
+**Decisions**
+- Kept native `confirm()` for batch approve and resets (works on phones; replacing it is Phase 1 polish).
+- `npm run demo` does not re-seed; run `npm run seed` once before the demo.

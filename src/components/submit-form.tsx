@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import { submitClaimAction, type SubmitState } from "@/app/actions";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { safe } from "@/lib/safe-action";
+import { ErrorNote } from "@/components/error-note";
+import { submitClaimAction, type SubmitErrorsState } from "@/app/actions";
 import type { Employee } from "@/lib/db";
 
 const MAX_SIDE = 1600;
@@ -36,28 +39,47 @@ function Field({ id, label, error, hint, children }: { id: string; label: string
 }
 
 export function SubmitForm({ employees, categories, today }: { employees: Employee[]; categories: string[]; today: string }) {
-  const [state, action, pending] = useActionState<SubmitState, FormData>(submitClaimAction, {});
+  const [errors, setErrors] = useState<SubmitErrorsState>({});
+  const [netErr, setNetErr] = useState<string>();
+  const [pending, go] = useTransition();
+  const router = useRouter();
+  const inFlight = useRef(false); // sync lock: React state updates too late to stop a fast double tap
   const [amount, setAmount] = useState("");
   const [preview, setPreview] = useState<string>();
   const [photo, setPhoto] = useState<File>();
   const [preparing, setPreparing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const e = state.errors ?? {};
+  const e = errors;
   const input = (bad?: string) => `h-12 w-full rounded-xl border bg-background px-3 text-base ${bad ? "border-red-600" : ""}`;
   const aria = (id: string, bad?: string) => ({ "aria-invalid": !!bad, "aria-describedby": bad ? `${id}-err` : `${id}-hint` });
 
   return (
     <form
-      action={(fd) => {
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        if (inFlight.current) return;
+        inFlight.current = true;
+        const fd = new FormData(ev.currentTarget);
         fd.delete("receipt");
         if (photo) fd.set("receipt", photo);
-        return action(fd);
+        setNetErr(undefined);
+        go(async () => {
+          const res = await safe(() => submitClaimAction(fd), setNetErr);
+          if (!res?.doneId) inFlight.current = false; // allow retry; on success stay locked while navigating
+          if (!res) return;
+          if (res.doneId) router.push(`/submit/done/${res.doneId}`);
+          else {
+            setErrors(res.errors ?? {});
+            requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
+          }
+        });
       }}
       className="space-y-4"
       noValidate
     >
+      <ErrorNote msg={netErr} />
       {Object.keys(e).length > 0 && (
-        <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+        <p id="form-errors" tabIndex={-1} role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800">
           Please fix the fields marked below.
         </p>
       )}

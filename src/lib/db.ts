@@ -99,7 +99,8 @@ const now = () => new Date().toISOString();
 
 export function setAuditDecision(id: number, status: Exclude<AuditStatus, "pending">, reason: string | null, note: string | null) {
   return getDb()
-    .prepare("UPDATE claims SET audit_status = ?, audit_reason = ?, audit_note = ?, audited_at = ? WHERE id = ?")
+    // Only a pending claim can be decided: a second auditor (or a stale screen) cannot silently overwrite a decision.
+    .prepare("UPDATE claims SET audit_status = ?, audit_reason = ?, audit_note = ?, audited_at = ? WHERE id = ? AND audit_status = 'pending'")
     .run(status, reason, note, now(), id).changes;
 }
 

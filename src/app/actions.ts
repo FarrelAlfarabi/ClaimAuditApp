@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { ROLE_COOKIE, type Role } from "@/lib/role";
 import { parseClaimForm, saveReceipt, type SubmitErrors } from "@/lib/submit";
 import { approveMany, insertClaim, resetDemoData, setAuditDecision, undoAuditDecision } from "@/lib/db";
@@ -16,15 +15,20 @@ function refresh(id?: number) {
   if (id) revalidatePath(`/claims/${id}`);
 }
 
-export async function approveClaim(id: number) {
-  setAuditDecision(id, "approved", null, null);
+export type DecisionResult = { ok: true } | { ok: false; message: string };
+const ALREADY = "This claim was already decided (maybe on another screen). Showing the saved decision.";
+
+export async function approveClaim(id: number): Promise<DecisionResult> {
+  const n = setAuditDecision(id, "approved", null, null);
   refresh(id);
+  return n ? { ok: true } : { ok: false, message: ALREADY };
 }
 
-export async function rejectClaim(id: number, reason: string, note: string) {
-  if (!rejectionReasons.includes(reason)) throw new Error("Unknown rejection reason");
-  setAuditDecision(id, "rejected", reason, note.trim() || null);
+export async function rejectClaim(id: number, reason: string, note: string): Promise<DecisionResult> {
+  if (!rejectionReasons.includes(reason)) return { ok: false, message: "Pick one of the listed reasons." };
+  const n = setAuditDecision(id, "rejected", reason, note.trim().slice(0, 300) || null);
   refresh(id);
+  return n ? { ok: true } : { ok: false, message: ALREADY };
 }
 
 export async function undoDecision(id: number) {
@@ -57,9 +61,10 @@ export async function resetRulesAction() {
   revalidatePath("/settings");
 }
 
-export type SubmitState = { errors?: SubmitErrors };
+export type SubmitErrorsState = SubmitErrors;
+export type SubmitState = { errors?: SubmitErrors; doneId?: number };
 
-export async function submitClaimAction(_: SubmitState, f: FormData): Promise<SubmitState> {
+export async function submitClaimAction(f: FormData): Promise<SubmitState> {
   const parsed = parseClaimForm(f);
   if ("errors" in parsed) return { errors: parsed.errors };
   let receipt_path: string | null = null;
@@ -73,12 +78,11 @@ export async function submitClaimAction(_: SubmitState, f: FormData): Promise<Su
   }
   const id = insertClaim({ ...parsed.claim, receipt_path, receipt_hash });
   refresh();
-  redirect(`/submit/done/${id}`);
+  return { doneId: id }; // client navigates; a redirect here could not be told apart from a network failure
 }
 
 export async function setRoleAction(role: Role) {
   (await cookies()).set(ROLE_COOKIE, role, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 7 });
-  redirect(role === "employee" ? "/submit" : "/");
 }
 
 export async function resetDemoAction() {

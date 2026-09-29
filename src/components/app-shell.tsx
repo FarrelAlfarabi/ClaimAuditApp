@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { safe } from "@/lib/safe-action";
+import { ErrorNote } from "@/components/error-note";
 import { cn } from "@/lib/utils";
 import { setRoleAction } from "@/app/actions";
 import type { Role } from "@/lib/role";
@@ -25,6 +27,16 @@ const TABS: Record<Role, Tab[]> = {
 export function AppShell({ role, children }: { role: Role; children: React.ReactNode }) {
   const path = usePathname();
   const [busy, go] = useTransition();
+  const [err, setErr] = useState<string>();
+  const router = useRouter();
+  const switchRole = (r: Role) => {
+    setErr(undefined);
+    go(async () => {
+      let ok = true;
+      await safe(() => setRoleAction(r), (m) => { ok = false; setErr(m); });
+      if (ok) { router.push(r === "employee" ? "/submit" : "/"); router.refresh(); }
+    });
+  };
   const tabs = TABS[role];
   return (
     <div className="min-h-dvh bg-muted/40">
@@ -37,15 +49,18 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           <div role="group" aria-label="Demo role" className="flex rounded-full border p-0.5 text-sm">
             {(["employee", "finance"] as Role[]).map((r) => (
               <button key={r} type="button" disabled={busy} aria-pressed={role === r}
-                onClick={() => role !== r && go(() => setRoleAction(r))}
-                className={cn("h-10 rounded-full px-3 font-medium", role === r ? "bg-foreground text-background" : "text-muted-foreground")}>
+                onClick={() => role !== r && switchRole(r)}
+                className={cn("h-11 min-w-11 rounded-full px-3 font-medium", role === r ? "bg-foreground text-background" : "text-muted-foreground")}>
                 {r === "employee" ? "Employee" : "Finance"}
               </button>
             ))}
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 pt-4 pb-24">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 pt-4 pb-24">
+        {err && <div className="mb-4"><ErrorNote msg={err} /></div>}
+        {children}
+      </main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-5xl" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
           {tabs.map((t) => {

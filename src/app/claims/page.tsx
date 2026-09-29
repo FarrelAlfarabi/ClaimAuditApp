@@ -53,7 +53,7 @@ export default function Home() {
         <TableBody>
           {claims.map((c) => (
             <TableRow key={c.id}>
-              <TableCell><a href={`/claims/${c.id}`} className="underline">{c.id}</a></TableCell>
+              <TableCell><a href={`/claims/${c.id}`} className="-m-2 inline-block p-3 underline">{c.id}</a></TableCell>
               <TableCell>{c.employee_name}</TableCell>
               <TableCell>{c.department_name}</TableCell>
               <TableCell>{c.category}</TableCell>
@@ -65,7 +65,7 @@ export default function Home() {
               <TableCell className="tabular-nums">{c.transaction_time ?? "-"}</TableCell>
               <TableCell>
                 {c.receipt_path ? (
-                  <a href={c.receipt_path} target="_blank" className="underline">view</a>
+                  <a href={c.receipt_path} target="_blank" className="-m-2 inline-block p-3 underline">view</a>
                 ) : (
                   <span className="text-muted-foreground">none</span>
                 )}

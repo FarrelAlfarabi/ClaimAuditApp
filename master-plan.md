@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 29 Sep 2026 (Tue)
 **Owner:** Farrel
 **Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
 **Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v2.5:** (1) Search and full filters on every list: Finance queue, All claims, My claims. Free-text search (claim #, employee, merchant, category, flag reasons), filters for risk, flag type, audit status, category, department, receipt, date range and amount range, five sort orders, removable filter chips, all kept in the link so a view can be shared. (2) A "Coming" tab with 10 static preview screens of planned features (Phase 1 and 2), each marked "DEMO PREVIEW · NOT WORKING YET" with disabled buttons. (3) A design brief for a Ruangguru-consistent visual refresh without Ruangguru logos or names (docs/design-prompt.md). Changed: 2.1, 4.4, 7, 8.
 
 **What changed in v2.4:** scope change on Tue 29 Sep, before the Tue 23:00 freeze: real login (Supabase Auth, email + password, two MOCK demo accounts) is now part of the Wednesday demo, replacing the role switcher; roles are enforced on the server; decisions record who made them; MOCK payout status and a home-screen icon were added; S7 prep done (backup video recorded, runbook updated). Claims data stays in local SQLite for Wednesday. Changed: 2.1, 3, 4.4, 5.1, 6.2 (OQ-09, OQ-26), 7, 8.
 
@@ -96,6 +98,8 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
 - Minimal "submit a claim" form that writes a claim and runs the engine live, so the audience can see a bad claim land as High risk in real time. No login, no mobile app, no real file storage policy.
 - Login (v2.4): Supabase Auth, email + password, two MOCK demo accounts (Finance, Employee) with a demo-only one-tap sign-in on the laptop. Role comes from the account and is checked on the server for every page and action. Kill switch `AUTH_DISABLED=1` falls back to the old Employee / Finance switcher if there is no internet.
 - Decisions record the Finance user and time; CSV export has an "Audited by" column.
+- Search, filters and sorting on every claim list (v2.5).
+- "Coming" tab (v2.5): static preview screens of 10 planned features (manager approval, escalation, status tracker, budget warning, notifications, audit trail, users and org import, OCR, HRIS sync, analytics). Every screen carries a "DEMO PREVIEW · NOT WORKING YET" banner; buttons are disabled; data is MOCK. They are pictures for the conversation, not scope.
 - "Reset demo data" button.
 
 **Mocked (seed data only, labeled "MOCK" in UI and code):**
@@ -212,6 +216,7 @@ Source of truth for each stage's detail is progress-log.md; QA findings are in d
 | S5 | Built, merged | Submit form with photo, role switcher, reset. **Phone hotspot and mirroring not yet tested on a real phone (OQ-23)** |
 | S6 | Built (used for a QA and UX audit), merged | Offline-safe actions, double-submit lock, decision conflicts, dialog accessibility, 44 px touch targets |
 | S7 | Prep done (v2.4); rehearsals not done | Backup video (62 s, phone size, captions) recorded by Claude against a local login stand-in; runbook updated for login. Still needs Farrel's phone: hotspot test, first real sign-in, 2 rehearsals |
+| Search and filters, Coming previews (v2.5) | Built, not yet on `main` | Tested at 390 px: search, each filter, sort, chip removal, empty states; axe 0 violations on the new screens |
 | Login (v2.4) | Built, **not yet on `main`** until Farrel says so | Tested against a local stand-in for Supabase; first real sign-in against the Supabase project not yet done |
 
 Open risks that can still break Wednesday: first real Supabase sign-in untested; login needs internet for the whole demo; real-phone hotspot and mirroring (OQ-23), OQ-01 (demo time and format), OQ-02 (what Wednesday must decide). CSV download and photo upload on a real iPhone are untested.
@@ -339,6 +344,7 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | **Vercel link mistaken for the demo** (approvals, uploads and rule changes on Vercel vanish within minutes; preview links also need a Vercel login) | Medium | Medium | Demo runs on the laptop (5.1). Share the Vercel link only for looking at screens; turn off deployment protection if an outside person must open it |
 | **Login fails live** (no mobile data, Supabase down, first real sign-in never tested) | Medium | High | Test the real sign-in tonight; the runbook's kill switch `AUTH_DISABLED=1` restores the no-login demo in about 30 seconds; backup video |
 | **Login added one day before the demo** (new code path on every page) | Medium | Medium | Tested locally (13 login checks + failure modes); decision made knowingly by Farrel; freeze at Tue 23:00 still holds |
+| **Preview screens read as promises** (the audience assumes previewed features are built, or quoted in the price) | Medium | High | Loud banner on every preview, disabled buttons, separate tab; say out loud "these are pictures of Phase 1 and 2, not built and not priced"; skip the tab if the room is price-focused |
 | ~~Wednesday plan has almost no slack~~ **Reduced (v2.3):** S0 to S6 are built; what is left is S7 (rehearsal, backup video) | Low | High | Feature freeze Tue 23:00; do the real-phone hotspot and mirroring test tonight, not Wednesday morning |
 | Auditing on a phone is slower for Finance at volume (small receipt images, one claim per screen) | Low (Finance also has desktop) | Medium | Desktop layout for heavy audit work; on phone, tap-to-zoom receipts and batch approve for Low risk |
 | Audience thinks the whole system is done | Medium | High | MOCK labels on screen, one opening sentence on "what is real today", Thread 01 handout |
@@ -386,6 +392,9 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-29 | Supabase used for login only for Wednesday; claims data stays in local SQLite. Moving data to Supabase Postgres stays a Phase 1 item (5.4). | Moving the data layer one day before the demo is a rewrite that could not be tested from the build environment, and would make every screen depend on the internet | Thread 02 (Build), pending Farrel review |
 | 2026-09-29 | New Supabase project `ruangguru-claim-audit-demo` (Singapore, free plan), separate from other clients' projects. Two MOCK accounts: finance.demo@example.com, employee.demo@example.com. | Keep client data apart; demo only, no real people | Thread 02, pending Farrel review |
 | 2026-09-29 | Note on the rule "no Phase 1 code before signed SOW": the login is demo scaffolding (two MOCK accounts, no user management), not the Phase 1 login item (2.2 item 5), which is still unbuilt and unpriced. | Keep the no-free-work rule honest | Thread 02, pending Farrel review |
+| 2026-09-29 | v2.5: search and complete filters on every claim list; static "Coming" preview screens for 10 planned features, labeled not working. | Farrel asked | Farrel |
+| 2026-09-29 | Previews are mock pictures only: no logic, no data writes, no commitment to scope or price. Phase 1 scope stays as in 2.2 and is set in the SOW. | Stop previews turning into unpriced promises | Thread 02, pending Farrel review |
+| 2026-09-29 | UI visual refresh briefed to Claude Design (docs/design-prompt.md): Ruangguru-like look and feel, no Ruangguru logos, names or trademarks; to be applied only after Wednesday unless it is a pure colour/type change. | Farrel asked; restyling the day before the demo risks breaking tested screens | Farrel (brief); timing by Thread 02, pending review |
 
 ---
 

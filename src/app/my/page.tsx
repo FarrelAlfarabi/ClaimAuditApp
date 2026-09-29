@@ -3,23 +3,49 @@ import { idr, dayName } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
 import { StatusChip } from "@/components/status-chip";
 import { requirePageRole } from "@/lib/role";
+import { applyFilters, readFilters } from "@/lib/claim-filters";
+import { SearchBar } from "@/components/search-bar";
+import { FilterSheet } from "@/components/filter-sheet";
+import { ActiveFilters } from "@/components/active-filters";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 /** Claims submitted through the demo form (seed claims excluded). No login, so this is everyone's demo submissions. */
-export default async function MyClaims() {
+export default async function MyClaims({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await requirePageRole("employee");
   // Signed in: only this employee's claims. Without login: every demo submission.
   const mine = getAuditedClaims().filter((c) => c.source === "demo" && (!me.employeeId || c.employee_id === me.employeeId)).sort((a, b) => b.id - a.id);
+  const f = readFilters(await searchParams);
+  const shown = applyFilters(mine, f);
+  const options = {
+    statuses: ["pending", "approved", "rejected"],
+    categories: [...new Set(mine.map((c) => c.category))].sort(),
+    receipt: true, dates: true, amounts: true, sort: true,
+  };
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Submitted in this demo</h1>
         <p className="text-sm text-muted-foreground">Status updates when Finance approves or rejects.</p>
       </div>
-      {mine.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Nothing submitted yet.</p>}
+      {mine.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Nothing submitted yet.</p>
+      ) : (
+        <>
+          <SearchBar placeholder="Search merchant, category, claim #…" />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground" role="status">{shown.length} of {mine.length} claims</span>
+            <FilterSheet basePath="/my" options={options} current={f} />
+          </div>
+          <ActiveFilters basePath="/my" f={f} />
+          {shown.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">No claims match. <Link href="/my" className="inline-flex min-h-11 items-center underline">Clear</Link></p>
+          )}
+        </>
+      )}
       <ul className="space-y-3">
-        {mine.map((c) => (
+        {shown.map((c) => (
           <li key={c.id} className="rounded-xl border bg-background p-4">
             <div className="flex items-center justify-between">
               <RiskBadge risk={c.risk} />

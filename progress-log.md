@@ -202,3 +202,16 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 **Not verified:** real sign-in against the Supabase project; login on a real phone; login on Vercel.
 
 **Decisions / discrepancies:** login was "out for Wednesday" in the plan (v2.4 records the reversal). Data stays in SQLite; moving it to Supabase is Phase 1. Login is demo scaffolding, not the Phase 1 login item.
+
+## 2026-09-29 ~14:30 WIB | Search/filters + Coming previews + design brief (master-plan v2.5) | 100% | No blocker | ~8.5h to the Tue 23:00 freeze
+
+**What changed and why**
+- One shared search and filter engine (`src/lib/claim-filters.ts`) used by the Finance queue, All claims and My claims. Free-text search across claim #, employee, merchant, category, department, description, amount, date and flag reasons ("#8" means claim 8 exactly). Filters: risk, flag type, audit status, category, department, receipt, date range, amount range. Five sort orders. Everything is in the link.
+- Search box updates as you type; removable chips show every active filter plus "Clear all"; empty states offer a way back; the filter sheet refuses min > max and from > to.
+- All claims page rewritten: it still said "no rules engine yet". It now shows risk, flags and status with the same search and filters.
+- "Coming" tab with 10 static preview screens of planned features, each with a "DEMO PREVIEW · NOT WORKING YET" banner and disabled buttons.
+- `docs/design-prompt.md`: brief for Claude Design (Ruangguru-like look, no Ruangguru logos or names).
+
+**Verified (production build, 390 px):** "gramedia" 6 results; "#8" exactly 1; reason text "weekend" 5; flag Duplicate + highest amount 6, sorted; 5 to 6 Sep 2 claims; no receipt 2; High + Meals 3, removing the Meals chip gives 10; min > max gives 0; All claims "kopi" 9 rows; empty state shown. axe 0 violations on queue, All claims, Coming, and two preview screens; no sideways scroll; 16/16 engine tests.
+
+**Not verified:** on a real phone; with login on (tested with AUTH_DISABLED=1; the new pages use the same role checks already tested).

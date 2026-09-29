@@ -2,7 +2,11 @@ import Link from "next/link";
 import { getAuditedClaims } from "@/lib/audit";
 import { idr, dayName } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
-import { FilterSheet, type Filters } from "@/components/filter-sheet";
+import { FilterSheet } from "@/components/filter-sheet";
+import { SearchBar } from "@/components/search-bar";
+import { ActiveFilters } from "@/components/active-filters";
+import { applyFilters, readFilters } from "@/lib/claim-filters";
+import { filterHref } from "@/lib/filter-url";
 import type { RiskLevel } from "@/lib/rules/engine";
 import { StatusChip } from "@/components/status-chip";
 import { BatchApprove } from "@/components/batch-approve";
@@ -12,23 +16,18 @@ export const dynamic = "force-dynamic";
 
 const uniq = (a: string[]) => [...new Set(a)].sort();
 
-export default async function Queue({ searchParams }: { searchParams: Promise<Filters> }) {
+export default async function Queue({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requirePageRole("finance");
-  const f = await searchParams;
+  const f = readFilters(await searchParams);
   const all = getAuditedClaims();
-  const claims = all.filter(
-    (c) =>
-      (!f.risk || c.risk === f.risk) &&
-      (!f.category || c.category === f.category) &&
-      (!f.dept || c.department_name === f.dept) &&
-      (!f.status || c.audit_status === f.status)
-  );
+  const claims = applyFilters(all, f);
   const counts = (["High", "Medium", "Low"] as RiskLevel[]).map((r) => ({ r, n: all.filter((c) => c.risk === r).length }));
   const approved = all.filter((c) => c.audit_status === "approved").length;
   const options = {
     categories: uniq(all.map((c) => c.category)),
     departments: uniq(all.map((c) => c.department_name)),
     statuses: ["pending", "approved", "rejected"],
+    risk: true, flags: true, receipt: true, dates: true, amounts: true, sort: true,
   };
 
   return (
@@ -40,7 +39,7 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
 
       <div className="grid grid-cols-3 gap-2">
         {counts.map(({ r, n }) => (
-          <Link key={r} href={f.risk === r ? "/" : `/?risk=${r}`}
+          <Link key={r} href={filterHref("/", f, { risk: f.risk === r ? undefined : r })} scroll={false} aria-current={f.risk === r ? "true" : undefined}
             className={`rounded-xl border bg-background p-3 text-center ${f.risk === r ? "ring-2 ring-foreground" : ""}`}>
             <div className="text-2xl font-bold tabular-nums">{n}</div>
             <div className="text-xs text-muted-foreground">{r}</div>
@@ -50,15 +49,18 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
 
       <BatchApprove count={all.filter((c) => c.risk === "Low" && c.audit_status === "pending").length} />
 
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{claims.length} of {all.length} claims</span>
+      <SearchBar placeholder="Search claim #, employee, merchant, reason…" />
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm text-muted-foreground" role="status">{claims.length} of {all.length} claims</span>
         <div className="flex gap-2">
           <a href="/api/export" className="flex h-11 items-center rounded-full border bg-background px-4 text-sm font-medium" download>
             Export CSV ({approved})
           </a>
-          <FilterSheet options={options} current={f} />
+          <FilterSheet basePath="/" options={options} current={f} />
         </div>
       </div>
+      <ActiveFilters basePath="/" f={f} />
 
       <ul className="grid gap-3 md:grid-cols-2">
         {claims.map((c) => (
@@ -92,7 +94,12 @@ export default async function Queue({ searchParams }: { searchParams: Promise<Fi
           </li>
         ))}
       </ul>
-      {claims.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No claims match these filters.</p>}
+      {claims.length === 0 && (
+        <div className="space-y-2 py-10 text-center text-sm text-muted-foreground">
+          <p>No claims match{f.q ? ` “${f.q}”` : ""} with these filters.</p>
+          <Link href="/" className="inline-flex min-h-11 items-center underline">Clear search and filters</Link>
+        </div>
+      )}
     </div>
   );
 }

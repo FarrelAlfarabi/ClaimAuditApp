@@ -16,10 +16,12 @@ const TABS: Record<Role, Tab[]> = {
     { href: "/", label: "Queue", match: (p) => p === "/" || /^\/claims\/\d+/.test(p) },
     { href: "/claims", label: "All claims", match: (p) => p === "/claims" },
     { href: "/settings", label: "Rules", match: (p) => p === "/settings" },
+    { href: "/preview", label: "Coming", match: (p) => p.startsWith("/preview") },
   ],
   employee: [
     { href: "/submit", label: "Submit", match: (p) => p.startsWith("/submit") },
     { href: "/my", label: "My claims", match: (p) => p === "/my" },
+    { href: "/preview", label: "Coming", match: (p) => p.startsWith("/preview") },
   ],
 };
 

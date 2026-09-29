@@ -19,8 +19,6 @@ export const PREVIEWS: Preview[] = [
     blurb: "Every decision and rule change, with who and when, that nobody can edit.", blurbId: "Setiap keputusan dan perubahan aturan, dengan siapa dan kapan, yang tidak bisa diubah siapa pun." },
   { slug: "users-admin", title: "Users and org import", titleId: "Pengguna dan impor struktur organisasi", who: "Admin", phase: "Phase 1",
     blurb: "Add people, set roles and managers, import the org chart from a spreadsheet.", blurbId: "Tambah orang, atur peran dan manajer, impor bagan organisasi dari spreadsheet." },
-  { slug: "ocr", title: "Receipt reading (OCR)", titleId: "Pembacaan struk (OCR)", who: "Employee", phase: "Phase 2",
-    blurb: "The app reads amount, date and merchant from the receipt photo.", blurbId: "Aplikasi membaca nominal, tanggal, dan merchant dari foto struk." },
   { slug: "hris-sync", title: "HRIS / payroll sync", titleId: "Sinkronisasi HRIS / penggajian", who: "Admin", phase: "Phase 2",
     blurb: "Org data comes in, approved claims go out to payroll automatically.", blurbId: "Data organisasi masuk, klaim yang disetujui otomatis dikirim ke penggajian." },
   { slug: "analytics", title: "Spend analytics", titleId: "Analitik pengeluaran", who: "Finance", phase: "Phase 2",

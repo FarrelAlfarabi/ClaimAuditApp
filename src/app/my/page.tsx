@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAuditedClaims } from "@/lib/audit";
 import { requirePageRole } from "@/lib/role";
 import { applyFilters, readFilters } from "@/lib/claim-filters";
+import { getEffectiveConfig } from "@/lib/settings";
 import { getDict } from "@/lib/i18n/server";
 import { SearchBar } from "@/components/search-bar";
 import { FilterSheet } from "@/components/filter-sheet";
@@ -20,32 +21,29 @@ export default async function MyClaims({ searchParams }: { searchParams: Promise
   const shown = applyFilters(mine, f);
   const options = {
     statuses: ["pending", "approved", "rejected"],
-    categories: [...new Set(mine.map((c) => c.category))].sort(),
-    receipt: true, dates: true, amounts: true, sort: true,
+    categories: Object.keys(getEffectiveConfig().categoryLimits).sort(),
+    risk: true, flags: true, receipt: true, dates: true, amounts: true, sort: true, time: true, day: true, hitCount: true,
   };
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-[26px] font-extrabold tracking-tight">{t.my.title}</h1>
-          {mine.length > 0 && <span className="num text-sm text-muted-foreground">{t.queue.count(shown.length, mine.length)}</span>}
-        </div>
+        <h1 className="text-[26px] font-extrabold tracking-tight">{t.my.title}</h1>
         <p className="text-sm text-muted-foreground">{t.my.sub}</p>
       </div>
+      {/* Search and filters stay visible even when empty, so the screen looks the same before and after the first claim. */}
+      <div className="flex gap-2.5">
+        <SearchBar placeholder="mine" />
+        <FilterSheet basePath="/my" options={options} current={f} />
+      </div>
+      <ActiveFilters basePath="/my" f={f} t={t} />
+      <div className="num text-[13px] font-bold text-muted-foreground" role="status">{t.queue.count(shown.length, mine.length)}</div>
       {mine.length === 0 ? (
         <div className="card flex flex-col items-center gap-3 px-5 py-8 text-center">
           <p className="text-[17px] font-extrabold">{t.my.nothing}</p>
           <Link href="/submit" className="btn btn-primary btn-sm">{t.submit.title}</Link>
         </div>
       ) : (
-        <>
-          <div className="flex gap-2.5">
-            <SearchBar placeholder="mine" />
-            <FilterSheet basePath="/my" options={options} current={f} />
-          </div>
-          <ActiveFilters basePath="/my" f={f} t={t} />
-          {shown.length === 0 && <EmptyState t={t} title={t.queue.empty} hint={t.queue.emptyHint} clearHref="/my" />}
-        </>
+        shown.length === 0 && <EmptyState t={t} title={t.queue.empty} hint={t.queue.emptyHint} clearHref="/my" />
       )}
       <ul className="grid gap-3 md:grid-cols-2">
         {shown.map((c) => <li key={c.id}><ClaimCard c={c} t={t} mine /></li>)}

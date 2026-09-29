@@ -98,8 +98,8 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
 - Minimal "submit a claim" form that writes a claim and runs the engine live, so the audience can see a bad claim land as High risk in real time. No login, no mobile app, no real file storage policy.
 - Login (v2.4): Supabase Auth, email + password, two MOCK demo accounts (Finance, Employee) with a demo-only one-tap sign-in on the laptop. Role comes from the account and is checked on the server for every page and action. Kill switch `AUTH_DISABLED=1` falls back to the old Employee / Finance switcher if there is no internet.
 - Decisions record the Finance user and time; CSV export has an "Audited by" column.
-- Search, filters and sorting on every claim list (v2.5).
-- "Coming" tab (v2.5): static preview screens of 10 planned features (manager approval, escalation, status tracker, budget warning, notifications, audit trail, users and org import, OCR, HRIS sync, analytics). Every screen carries a "DEMO PREVIEW · NOT WORKING YET" banner; buttons are disabled; data is MOCK. They are pictures for the conversation, not scope.
+- Search, filters and sorting on every claim list (v2.5). Finance filters include submitting employee, manager (MOCK), deciding Finance user, number of flags, weekday/weekend, time entered and sample vs demo-submitted; employees get search and filters on their own claims only.
+- "Coming" tab (v2.5): static preview screens of 9 planned features (OCR preview removed) (manager approval, escalation, status tracker, budget warning, notifications, audit trail, users and org import, HRIS sync, analytics; OCR preview removed at Farrel's request). Every screen carries a "DEMO PREVIEW · NOT WORKING YET" banner; buttons are disabled; data is MOCK. They are pictures for the conversation, not scope.
 - "Reset demo data" button.
 
 **Mocked (seed data only, labeled "MOCK" in UI and code):**

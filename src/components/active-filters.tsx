@@ -15,6 +15,13 @@ export function ActiveFilters({ basePath, f, t }: { basePath: string; f: Filters
   if (f.category) chips.push(["category", catLabel(t, f.category)]);
   if (f.dept) chips.push(["dept", f.dept]);
   if (f.status) chips.push(["status", t.status[f.status as keyof Dict["status"]] ?? f.status]);
+  if (f.emp) chips.push(["emp", t.filters.empChip(f.emp)]);
+  if (f.mgr) chips.push(["mgr", t.filters.mgrChip(f.mgr)]);
+  if (f.by) chips.push(["by", f.by === "none" ? t.filters.byNone : t.filters.byChip(f.by)]);
+  if (f.hits) chips.push(["hits", t.filters.hitsChip[f.hits] ?? f.hits]);
+  if (f.day) chips.push(["day", t.filters.dayL[f.day] ?? f.day]);
+  if (f.time) chips.push(["time", t.filters.timeL[f.time] ?? f.time]);
+  if (f.src) chips.push(["src", t.filters.srcL[f.src] ?? f.src]);
   if (f.receipt) chips.push(["receipt", f.receipt === "with" ? t.filters.hasReceipt : t.filters.noReceipt]);
   if (f.from || f.to) chips.push(["date", t.filters.range(f.from ?? "…", f.to ?? "…")]);
   if (f.min || f.max) chips.push(["amount", t.filters.range(f.min ? idr(Number(f.min)) : "Rp 0", f.max ? idr(Number(f.max)) : t.filters.any)]);

@@ -215,3 +215,9 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 **Verified (production build, 390 px):** "gramedia" 6 results; "#8" exactly 1; reason text "weekend" 5; flag Duplicate + highest amount 6, sorted; 5 to 6 Sep 2 claims; no receipt 2; High + Meals 3, removing the Meals chip gives 10; min > max gives 0; All claims "kopi" 9 rows; empty state shown. axe 0 violations on queue, All claims, Coming, and two preview screens; no sideways scroll; 16/16 engine tests.
 
 **Not verified:** on a real phone; with login on (tested with AUTH_DISABLED=1; the new pages use the same role checks already tested).
+
+## 2026-09-29 ~15:00 WIB | More filters (people and others) | 100% | No blocker
+
+- Finance (queue and All claims): filter by submitting employee, manager (MOCK), and the Finance user who decided (or "decided without login"); plus number of flags, weekday/weekend, time entered or not, sample vs demo-submitted. New sorts: recently submitted, recently decided. Search also matches manager and decider.
+- Employee My claims: search and filters now always visible (were hidden until the first claim); added risk, flag, number of flags, weekday/weekend, time entered. Employees never see other people's claims or the people filters.
+- Verified (production build, 390 px): Andi 4, Rina's team 30, no flags 60, weekend 5, time entered 42, decided without login 1; filter sheet with dropdowns works; axe 0 on queue and open sheet; employee search and category filter correct; 0 JS errors.

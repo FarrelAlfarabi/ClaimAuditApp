@@ -36,7 +36,7 @@ Employees submit expense claims with a photo of the receipt. A rules engine chec
    - A large Submit button.
 9. **Employee · Result:** a big risk badge, "N reasons Finance will see" with points, then Submit another / My claims.
 10. **Employee · My claims:** search, filters, and cards with risk, status chip, amount, merchant and date, plus the rejection reason or "payout queued".
-11. **"Coming" tab:** a catalogue of 10 planned features grouped Phase 1 / Phase 2 (manager approval inbox, high-value escalation, claim status tracker, budget warning while submitting, notifications, audit trail, users and org import, receipt reading (OCR), HRIS/payroll sync, spend analytics). Each has a card and a mock screen. **Every preview screen must carry an unmistakable "DEMO PREVIEW · NOT WORKING YET" banner** (for example a dashed amber border with diagonal stripes). Its buttons must look clearly inactive, not just faded.
+11. **"Coming" tab:** a catalogue of 9 planned features grouped Phase 1 / Phase 2 (manager approval inbox, high-value escalation, claim status tracker, budget warning while submitting, notifications, audit trail, users and org import, HRIS/payroll sync, spend analytics). Each has a card and a mock screen. **Every preview screen must carry an unmistakable "DEMO PREVIEW · NOT WORKING YET" banner** (for example a dashed amber border with diagonal stripes). Its buttons must look clearly inactive, not just faded.
 
 ## App frame
 - A top bar with the app name, a small "DEMO · MOCK DATA" tag, and the signed-in user (name + role) with Sign out.

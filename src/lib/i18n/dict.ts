@@ -11,7 +11,7 @@ export const isLang = (v: unknown): v is Lang => v === "en" || v === "id";
 
 type Status = "pending" | "approved" | "rejected";
 type Who = "Finance" | "Employee" | "Manager" | "Admin";
-type Sort = "risk" | "newest" | "oldest" | "amount_desc" | "amount_asc";
+type Sort = "risk" | "newest" | "recent" | "decided" | "oldest" | "amount_desc" | "amount_asc";
 
 const en = {
   langName: "English",
@@ -31,13 +31,13 @@ const en = {
   flag: {
     over_limit: "Over limit", near_limit: "Near limit", duplicate: "Duplicate", weekend: "Weekend", off_hours: "Off-hours", missing_receipt: "No receipt",
   } as Record<RuleId, string>,
-  sort: { risk: "Riskiest first", newest: "Newest date", oldest: "Oldest date", amount_desc: "Highest amount", amount_asc: "Lowest amount" } as Record<Sort, string>,
+  sort: { risk: "Riskiest first", newest: "Newest date", recent: "Recently submitted", decided: "Recently decided", oldest: "Oldest date", amount_desc: "Highest amount", amount_asc: "Lowest amount" } as Record<Sort, string>,
   days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   daysLong: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
   months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   search: {
     label: "Search", clear: "Clear search",
-    finance: "Search claim #, employee, merchant, reason…", mine: "Search merchant, category, claim #…",
+    finance: "Search claim #, employee, merchant, reason…", mine: "Search merchant, category, claim #, reason…",
   },
   filters: {
     button: "Filters", buttonAria: (n: number) => (n ? `Filters, ${n} active` : "Filters"), title: "Filter and sort",
@@ -48,6 +48,14 @@ const en = {
     active: "Active filters", remove: (l: string) => `Remove filter ${l}`, clearAll: "Clear all",
     riskChip: (r: string) => `Risk: ${r}`, flagChip: (f: string) => `Flag: ${f}`, sortChip: (s: string) => `Sort: ${s}`,
     range: (a: string, b: string) => `${a} to ${b}`, any: "any",
+    emp: "Submitted by (MOCK employee)", everyone: "Everyone", mgr: "Manager (MOCK)", anyMgr: "Any manager",
+    by: "Decided by (Finance user)", anyone: "Anyone", noLogin: "No login (demo mode)",
+    hits: "Number of flags", hitsL: { "0": "None", "1": "One", "2+": "Two or more" } as Record<string, string>,
+    day: "Day", dayL: { weekday: "Weekday", weekend: "Weekend" } as Record<string, string>,
+    time: "Transaction time", timeL: { with: "Time entered", without: "No time" } as Record<string, string>,
+    src: "Source", srcL: { seed: "Sample data", demo: "Submitted in demo" } as Record<string, string>,
+    empChip: (n: string) => `By ${n}`, mgrChip: (n: string) => `Manager: ${n}`, byChip: (n: string) => `Decided by ${n}`,
+    byNone: "Decided without login", hitsChip: { "0": "No flags", "1": "One flag", "2+": "2+ flags" } as Record<string, string>,
   },
   queue: {
     title: "Audit queue", sub: "Riskiest first. Flags mean review, not reject.",
@@ -199,13 +207,13 @@ const id: Dict = {
   flag: {
     over_limit: "Lewat batas", near_limit: "Mendekati batas", duplicate: "Duplikat", weekend: "Akhir pekan", off_hours: "Di luar jam kerja", missing_receipt: "Tanpa struk",
   },
-  sort: { risk: "Risiko tertinggi dulu", newest: "Tanggal terbaru", oldest: "Tanggal terlama", amount_desc: "Nominal tertinggi", amount_asc: "Nominal terendah" },
+  sort: { risk: "Risiko tertinggi dulu", newest: "Tanggal terbaru", recent: "Baru diajukan", decided: "Baru diputuskan", oldest: "Tanggal terlama", amount_desc: "Nominal tertinggi", amount_asc: "Nominal terendah" },
   days: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"],
   daysLong: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],
   months: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
   search: {
     label: "Cari", clear: "Hapus pencarian",
-    finance: "Cari klaim #, karyawan, merchant, alasan…", mine: "Cari merchant, kategori, klaim #…",
+    finance: "Cari klaim #, karyawan, merchant, alasan…", mine: "Cari merchant, kategori, klaim #, alasan…",
   },
   filters: {
     button: "Filter", buttonAria: (n) => (n ? `Filter, ${n} aktif` : "Filter"), title: "Filter dan urutan",
@@ -216,6 +224,14 @@ const id: Dict = {
     active: "Filter aktif", remove: (l) => `Hapus filter ${l}`, clearAll: "Hapus semua",
     riskChip: (r) => `Risiko: ${r}`, flagChip: (f) => `Tanda: ${f}`, sortChip: (s) => `Urutan: ${s}`,
     range: (a, b) => `${a} s/d ${b}`, any: "berapa pun",
+    emp: "Diajukan oleh (karyawan MOCK)", everyone: "Semua orang", mgr: "Manajer (MOCK)", anyMgr: "Manajer mana pun",
+    by: "Diputuskan oleh (pengguna Keuangan)", anyone: "Siapa pun", noLogin: "Tanpa login (mode demo)",
+    hits: "Jumlah tanda", hitsL: { "0": "Tidak ada", "1": "Satu", "2+": "Dua atau lebih" },
+    day: "Hari", dayL: { weekday: "Hari kerja", weekend: "Akhir pekan" },
+    time: "Waktu transaksi", timeL: { with: "Waktu diisi", without: "Tanpa waktu" },
+    src: "Sumber", srcL: { seed: "Data contoh", demo: "Diajukan di demo" },
+    empChip: (n) => `Oleh ${n}`, mgrChip: (n) => `Manajer: ${n}`, byChip: (n) => `Diputuskan oleh ${n}`,
+    byNone: "Diputuskan tanpa login", hitsChip: { "0": "Tanpa tanda", "1": "Satu tanda", "2+": "2+ tanda" },
   },
   queue: {
     title: "Antrean audit", sub: "Risiko tertinggi dulu. Tanda berarti perlu dicek, bukan ditolak.",

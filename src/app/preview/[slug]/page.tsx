@@ -139,23 +139,6 @@ function UsersAdmin({ t, L }: Ctx) {
   );
 }
 
-function Ocr({ t, L }: Ctx) {
-  return (
-    <div className="space-y-3">
-      <Card>
-        <div className="flex h-32 items-center justify-center rounded-xl bg-card-2 text-sm text-muted-foreground">[ {L("receipt photo", "foto struk")} ]</div>
-        <div className="mt-3 text-sm font-extrabold">{L("Read from the receipt", "Terbaca dari struk")}</div>
-        <Row k={t.submit.merchant} v={<>Sate Khas Senayan <Pill tone="ok">98%</Pill></>} />
-        <Row k={t.submit.amount} v={<>Rp 450.000 <Pill tone="ok">99%</Pill></>} />
-        <Row k={t.submit.date} v={<>26 Sep 2026 <Pill tone="ok">97%</Pill></>} />
-        <Row k={t.submit.time} v={<>21:47 <Pill tone="warn">{L("71%, please check", "71%, mohon dicek")}</Pill></>} />
-      </Card>
-      <FakeButton t={t}>{L("Use these values", "Pakai nilai ini")}</FakeButton>
-      <p className="text-xs text-muted-foreground">{L("With the time read from the receipt, the off-hours check works on every claim (today it only works if the employee types the time).", "Dengan waktu terbaca dari struk, cek di luar jam kerja berlaku untuk semua klaim (saat ini hanya jika karyawan mengetik waktunya).")}</p>
-    </div>
-  );
-}
-
 function HrisSync({ t, L }: Ctx) {
   return (
     <div className="space-y-3">
@@ -201,7 +184,7 @@ function Analytics({ t, L }: Ctx) {
 
 const BODIES: Record<string, (c: Ctx) => React.ReactNode> = {
   "manager-approval": ManagerApproval, escalation: Escalation, "status-tracker": StatusTracker, "budget-warning": BudgetWarning,
-  notifications: Notifications, "audit-trail": AuditTrail, "users-admin": UsersAdmin, ocr: Ocr, "hris-sync": HrisSync, analytics: Analytics,
+  notifications: Notifications, "audit-trail": AuditTrail, "users-admin": UsersAdmin, "hris-sync": HrisSync, analytics: Analytics,
 };
 
 export default async function PreviewPage({ params }: { params: Promise<{ slug: string }> }) {

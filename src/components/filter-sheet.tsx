@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { SORTS, activeCount, type Filters } from "@/lib/claim-filters";
 import { filterHref } from "@/lib/filter-url";
 import { catLabel } from "@/lib/i18n/dict";
-import { IconCheck, IconFilter, IconX } from "@/components/icons";
+import { IconCheck, IconChevronDown, IconFilter, IconX } from "@/components/icons";
 import { useT } from "@/components/i18n-provider";
 
 export type { Filters };
@@ -20,7 +20,33 @@ type Options = {
   dates?: boolean;
   amounts?: boolean;
   sort?: boolean;
+  employees?: string[];
+  managers?: string[];
+  auditors?: string[];   // emails; "none" is added for decisions made without login
+  time?: boolean;
+  source?: boolean;
+  day?: boolean;
+  hitCount?: boolean;
 };
+
+/** Long lists (people) use a native select instead of chips. */
+function Select({ label, name, values, value, onPick, all, noneLabel }: {
+  label: string; name: keyof Filters; values: string[]; value?: string; onPick: (k: keyof Filters, v?: string) => void; all: string; noneLabel: string;
+}) {
+  const id = `f-${name}`;
+  return (
+    <div>
+      <label htmlFor={id} className="mb-2.5 block text-[15px] font-extrabold">{label}</label>
+      <div className="relative">
+        <select id={id} value={value ?? ""} onChange={(e) => onPick(name, e.target.value || undefined)} className="input appearance-none pr-11 font-semibold">
+          <option value="">{all}</option>
+          {values.map((v) => <option key={v} value={v}>{v === "none" ? noneLabel : v}</option>)}
+        </select>
+        <IconChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-2" />
+      </div>
+    </div>
+  );
+}
 
 function Chips({ label, name, values, value, onPick, labels, allLabel }: {
   label: string; name: keyof Filters; values: string[]; value?: string; onPick: (k: keyof Filters, v?: string) => void;
@@ -67,7 +93,7 @@ export function FilterSheet({ basePath = "/", options, current }: { basePath?: s
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
       if (e.key !== "Tab") return;
-      const f = [...el.querySelectorAll<HTMLElement>("button, input")];
+      const f = [...el.querySelectorAll<HTMLElement>("button, input, select")];
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -117,6 +143,13 @@ export function FilterSheet({ basePath = "/", options, current }: { basePath?: s
               {options.categories && <Chips label={t.filters.category} name="category" values={options.categories}
                 labels={Object.fromEntries(options.categories.map((c) => [c, catLabel(t, c)]))} value={draft.category} onPick={pick} allLabel={t.filters.all} />}
               {options.departments && <Chips label={t.filters.dept} name="dept" values={options.departments} value={draft.dept} onPick={pick} allLabel={t.filters.all} />}
+              {options.employees && <Select label={t.filters.emp} name="emp" values={options.employees} value={draft.emp} onPick={pick} all={t.filters.everyone} noneLabel={t.filters.noLogin} />}
+              {options.managers && <Select label={t.filters.mgr} name="mgr" values={options.managers} value={draft.mgr} onPick={pick} all={t.filters.anyMgr} noneLabel={t.filters.noLogin} />}
+              {options.auditors && <Select label={t.filters.by} name="by" values={options.auditors} value={draft.by} onPick={pick} all={t.filters.anyone} noneLabel={t.filters.noLogin} />}
+              {options.hitCount && <Chips label={t.filters.hits} name="hits" values={["0", "1", "2+"]} labels={t.filters.hitsL} value={draft.hits} onPick={pick} allLabel={t.filters.all} />}
+              {options.day && <Chips label={t.filters.day} name="day" values={["weekday", "weekend"]} labels={t.filters.dayL} value={draft.day} onPick={pick} allLabel={t.filters.all} />}
+              {options.time && <Chips label={t.filters.time} name="time" values={["with", "without"]} labels={t.filters.timeL} value={draft.time} onPick={pick} allLabel={t.filters.all} />}
+              {options.source && <Chips label={t.filters.src} name="src" values={["seed", "demo"]} labels={t.filters.srcL} value={draft.src} onPick={pick} allLabel={t.filters.all} />}
               {options.receipt && <Chips label={t.filters.receipt} name="receipt" values={["with", "without"]} labels={{ with: t.filters.hasReceipt, without: t.filters.noReceipt }} value={draft.receipt} onPick={pick} allLabel={t.filters.all} />}
               {options.dates && (
                 <fieldset>

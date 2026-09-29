@@ -54,6 +54,7 @@ export type ClaimRow = {
   id: number;
   employee_id: number;
   employee_name: string;
+  manager_name: string;
   department_name: string;
   category: string;
   merchant: string;
@@ -87,7 +88,7 @@ export function getDb() {
 export function listClaims(): ClaimRow[] {
   return getDb()
     .prepare(
-      `SELECT c.id, c.employee_id, e.name AS employee_name, d.name AS department_name, c.category, c.merchant,
+      `SELECT c.id, c.employee_id, e.name AS employee_name, e.manager_name, d.name AS department_name, c.category, c.merchant,
               c.amount, c.transaction_date, c.transaction_time, c.description, c.receipt_path, c.receipt_hash, c.manager_status, c.source,
               c.audit_status, c.audit_reason, c.audit_note, c.audited_at, c.audited_by
        FROM claims c

@@ -3,14 +3,16 @@ import { notFound } from "next/navigation";
 import { getAuditedClaims } from "@/lib/audit";
 import { idr } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
+import { requirePageRole } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
 
 /** Shown right after a submit: what the engine decided, live. */
 export default async function Done({ params }: { params: Promise<{ id: string }> }) {
+  const me = await requirePageRole("employee");
   const id = Number((await params).id);
   const c = getAuditedClaims().find((x) => x.id === id);
-  if (!c) notFound();
+  if (!c || c.source !== "demo" || (me.employeeId && c.employee_id !== me.employeeId)) notFound();
   return (
     <div className="space-y-4">
       <div className="rounded-xl border bg-background p-5 text-center">

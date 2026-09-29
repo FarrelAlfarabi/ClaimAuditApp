@@ -38,7 +38,7 @@ function Field({ id, label, error, hint, children }: { id: string; label: string
   );
 }
 
-export function SubmitForm({ employees, categories, today }: { employees: Employee[]; categories: string[]; today: string }) {
+export function SubmitForm({ employees, self, categories, today }: { employees: Employee[]; self: Employee | null; categories: string[]; today: string }) {
   const [errors, setErrors] = useState<SubmitErrorsState>({});
   const [netErr, setNetErr] = useState<string>();
   const [pending, go] = useTransition();
@@ -84,11 +84,19 @@ export function SubmitForm({ employees, categories, today }: { employees: Employ
         </p>
       )}
       <div className="space-y-4 rounded-xl border bg-background p-4">
+        {self ? (
+          <div className="text-sm">
+            <span className="text-muted-foreground">Submitting as </span>
+            <span className="font-medium">{self.name} · {self.department_name}</span>
+            <span className="text-muted-foreground"> (MOCK employee linked to your login)</span>
+          </div>
+        ) : (
         <Field id="employee" label="Submitting as (MOCK employee)" error={e.employee}>
           <select id="employee" name="employee" defaultValue={employees[0]?.id} className={input(e.employee)} {...aria("employee", e.employee)}>
             {employees.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.department_name}</option>)}
           </select>
         </Field>
+        )}
         <Field id="category" label="Category" error={e.category}>
           <select id="category" name="category" defaultValue="" className={input(e.category)} {...aria("category", e.category)}>
             <option value="" disabled>Choose…</option>

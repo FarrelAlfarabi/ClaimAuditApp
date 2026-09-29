@@ -41,7 +41,8 @@ CREATE TABLE claims (
   audit_status TEXT NOT NULL DEFAULT 'pending',  -- Finance decision: pending | approved | rejected
   audit_reason TEXT,                             -- standard rejection reason (rules.config.json)
   audit_note TEXT,
-  audited_at TEXT
+  audited_at TEXT,
+  audited_by TEXT                                -- email of the Finance user who decided (NULL without login)
 );
 CREATE TABLE settings (
   key TEXT PRIMARY KEY,
@@ -51,6 +52,7 @@ CREATE TABLE settings (
 
 export type ClaimRow = {
   id: number;
+  employee_id: number;
   employee_name: string;
   department_name: string;
   category: string;
@@ -67,6 +69,7 @@ export type ClaimRow = {
   audit_reason: string | null;
   audit_note: string | null;
   audited_at: string | null;
+  audited_by: string | null;
 };
 
 export type AuditStatus = "pending" | "approved" | "rejected";
@@ -84,9 +87,9 @@ export function getDb() {
 export function listClaims(): ClaimRow[] {
   return getDb()
     .prepare(
-      `SELECT c.id, e.name AS employee_name, d.name AS department_name, c.category, c.merchant,
+      `SELECT c.id, c.employee_id, e.name AS employee_name, d.name AS department_name, c.category, c.merchant,
               c.amount, c.transaction_date, c.transaction_time, c.description, c.receipt_path, c.receipt_hash, c.manager_status, c.source,
-              c.audit_status, c.audit_reason, c.audit_note, c.audited_at
+              c.audit_status, c.audit_reason, c.audit_note, c.audited_at, c.audited_by
        FROM claims c
        JOIN employees e ON e.id = c.employee_id
        JOIN departments d ON d.id = e.department_id
@@ -97,23 +100,25 @@ export function listClaims(): ClaimRow[] {
 
 const now = () => new Date().toISOString();
 
-export function setAuditDecision(id: number, status: Exclude<AuditStatus, "pending">, reason: string | null, note: string | null) {
+export function setAuditDecision(
+  id: number, status: Exclude<AuditStatus, "pending">, reason: string | null, note: string | null, by: string | null
+) {
   return getDb()
     // Only a pending claim can be decided: a second auditor (or a stale screen) cannot silently overwrite a decision.
-    .prepare("UPDATE claims SET audit_status = ?, audit_reason = ?, audit_note = ?, audited_at = ? WHERE id = ? AND audit_status = 'pending'")
-    .run(status, reason, note, now(), id).changes;
+    .prepare("UPDATE claims SET audit_status = ?, audit_reason = ?, audit_note = ?, audited_at = ?, audited_by = ? WHERE id = ? AND audit_status = 'pending'")
+    .run(status, reason, note, now(), by, id).changes;
 }
 
 export function undoAuditDecision(id: number) {
   return getDb()
-    .prepare("UPDATE claims SET audit_status = 'pending', audit_reason = NULL, audit_note = NULL, audited_at = NULL WHERE id = ?")
+    .prepare("UPDATE claims SET audit_status = 'pending', audit_reason = NULL, audit_note = NULL, audited_at = NULL, audited_by = NULL WHERE id = ?")
     .run(id).changes;
 }
 
-export function approveMany(ids: number[]) {
+export function approveMany(ids: number[], by: string | null) {
   const db = getDb();
-  const stmt = db.prepare("UPDATE claims SET audit_status = 'approved', audited_at = ? WHERE id = ? AND audit_status = 'pending'");
-  return db.transaction(() => ids.reduce((n, id) => n + stmt.run(now(), id).changes, 0))();
+  const stmt = db.prepare("UPDATE claims SET audit_status = 'approved', audited_at = ?, audited_by = ? WHERE id = ? AND audit_status = 'pending'");
+  return db.transaction(() => ids.reduce((n, id) => n + stmt.run(now(), by, id).changes, 0))();
 }
 
 export function getSetting<T>(key: string): T | undefined {

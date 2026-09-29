@@ -33,7 +33,7 @@ Scope: every screen of the demo build, at 320 / 390 / 768 / 1280 px, production 
 |---|---|---|---|
 | O1 | High (demo) | Real phone + hotspot + mirroring never tested. | Needs Farrel's phone (OQ-23). Test tonight, not Wednesday morning. |
 | O2 | Medium | Vercel preview: decisions and uploads live in `/tmp` of one server instance; they vanish when it sleeps or another instance answers. | By design for a preview (plan 5.1: demo runs locally). Phase 1 moves to Postgres + storage (plan 5.4). |
-| O3 | Medium | Role is not enforced: an "employee" can open Finance URLs directly. | Demo has no login by design (plan 2.1). Phase 1 login and roles. |
+| ~~O3~~ | Fixed (29 Sep, v2.4) | Role was not enforced. | Supabase login added; every page, server action, the export and the receipt route check the role on the server. See the Login section. |
 | O4 | Medium | `npm run dev` / `npm run seed` wipe all demo data on every start. If the laptop server restarts mid-demo, submitted claims are gone. | Keeps the demo clean. Do not restart mid-demo; `npm run demo` does not re-seed (run `npm run seed` once before). |
 | O5 | Low | All claims page is a wide table; on a phone it scrolls sideways inside its box. | Secondary screen for spot-checks. Phase 1 desktop table (plan 2.2 item 4). |
 | O6 | Low | Every page recomputes the audit for all claims. | Fine at 80 to a few thousand claims. Phase 1: store results, paginate. |
@@ -50,3 +50,28 @@ Scope: every screen of the demo build, at 320 / 390 / 768 / 1280 px, production 
 5. Replace native `confirm()` dialogs with an in-app dialog that matches the sheet (consistent, testable, localisable).
 6. Indonesian UI copy (all text is English today) with a string table.
 7. End-to-end tests (the Playwright scripts used in this audit) in CI, run before every deploy.
+
+## Login (Supabase), added 29 Sep after the audit (master-plan v2.4)
+
+Tested against a local stand-in for the Supabase login service (this environment cannot reach supabase.co), production build, 390 px.
+
+| Check | Result |
+|---|---|
+| Signed out: any page, `/api/export`, `/api/receipts/*` | Redirect to Sign in; the page you asked for is kept and reopened after sign-in |
+| Wrong password | "Email or password is wrong." |
+| Account without an app role | Refused and signed out |
+| Email typed with capitals and a trailing space | Signs in |
+| Finance opens Employee pages / Employee opens Finance pages | Sent to their own home screen |
+| Employee calls export | 403 |
+| Employee tampers with the form to submit as someone else | Ignored: the server uses the login's employee |
+| Employee opens another person's result page | Not found |
+| Decision records who decided | Detail shows "By finance.demo@example.com · time WIB"; CSV has an "Audited by" column |
+| Reload keeps the session; Sign out ends it | Yes |
+| Login service unreachable | Clear message naming the fallback (`AUTH_DISABLED=1`) |
+| Kill switch `AUTH_DISABLED=1` | Login off, role switcher back, `/login` redirects home |
+
+**Bug found and fixed while recording the backup video:** after Sign out, a stale "Could not save" error appeared on the next screen (the sign-out redirect was treated as a failure, and the message survived the page change). Sign-out now returns a result and the client navigates; errors clear on page change.
+
+**Not verified:** sign-in against the real Supabase project (needs internet this environment does not have). First real sign-in happens on Farrel's laptop tonight, or on the Vercel link.
+
+**New risk:** with login on, every page load checks the session with Supabase, so the laptop needs working internet during the whole demo (see runbook for the fallback).

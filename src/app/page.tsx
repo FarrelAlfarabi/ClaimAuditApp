@@ -6,12 +6,14 @@ import { FilterSheet, type Filters } from "@/components/filter-sheet";
 import type { RiskLevel } from "@/lib/rules/engine";
 import { StatusChip } from "@/components/status-chip";
 import { BatchApprove } from "@/components/batch-approve";
+import { requirePageRole } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
 
 const uniq = (a: string[]) => [...new Set(a)].sort();
 
 export default async function Queue({ searchParams }: { searchParams: Promise<Filters> }) {
+  await requirePageRole("finance");
   const f = await searchParams;
   const all = getAuditedClaims();
   const claims = all.filter(

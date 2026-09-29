@@ -177,3 +177,28 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 **Decisions**
 - Kept native `confirm()` for batch approve and resets (works on phones; replacing it is Phase 1 polish).
 - `npm run demo` does not re-seed; run `npm run seed` once before the demo.
+
+## 2026-09-29 13:30 WIB | S7 prep + login (scope change, master-plan v2.4) | S7 prep 100%, rehearsals 0% (need Farrel's phone) | Blocker: first real Supabase sign-in cannot be done from the build environment (no network to supabase.co) | ~9.5h to the Tue 23:00 freeze
+
+**Asked by Farrel:** proceed to S7, add user login with Supabase, add anything else missing.
+
+**What changed and why**
+- Login with Supabase Auth: new project `ruangguru-claim-audit-demo` (Singapore, free plan), two MOCK accounts (finance.demo@example.com, employee.demo@example.com), password set by Claude and shared in chat only. Role lives in `app_metadata` (users cannot change it).
+- Middleware keeps the session fresh and sends signed-out visitors to Sign in (the page they wanted is reopened after). Every page, server action, the CSV export and the receipt route check the role on the server.
+- Login page: email + password, plus a demo-only one-tap Finance / Employee sign-in on the laptop (`DEMO_QUICK_LOGIN=1`; password stays on the server). Off on Vercel.
+- A signed-in employee always submits as their own MOCK employee; "My claims" shows only their claims.
+- Decisions record who and when ("By finance.demo@example.com · time WIB"); CSV has "Audited by".
+- Kill switch `AUTH_DISABLED=1`: login off, role switcher back. For a hotspot without mobile data.
+- Missing vs plan 2.1: MOCK payout status ("Dicairkan") on approved claims; home-screen icon + web app manifest.
+- S7 prep: 62-second phone-size backup video with captions; runbook updated for login, internet need and kill switch.
+- Vercel: Supabase URL and publishable key set for production, preview and development.
+
+**Bugs found and fixed**
+- Sign-out left a stale "Could not save" error on the next screen (found in the backup video). Fixed.
+- "Sign-in failed" when Supabase is unreachable told you nothing useful; now it names the fallback.
+
+**Verified:** 13 login checks + unreachable-service + kill-switch against a local stand-in for Supabase, production build, 390 px (docs/qa-audit.md, Login section). 16/16 engine tests. tsc and eslint clean.
+
+**Not verified:** real sign-in against the Supabase project; login on a real phone; login on Vercel.
+
+**Decisions / discrepancies:** login was "out for Wednesday" in the plan (v2.4 records the reversal). Data stays in SQLite; moving it to Supabase is Phase 1. Login is demo scaffolding, not the Phase 1 login item.

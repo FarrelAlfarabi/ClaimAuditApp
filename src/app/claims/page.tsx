@@ -1,5 +1,6 @@
 import { listClaims } from "@/lib/db";
 import { getEffectiveConfig } from "@/lib/settings";
+import { requirePageRole } from "@/lib/role";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const idr = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
-export default function Home() {
+export default async function Home() {
+  await requirePageRole("finance");
   const claims = listClaims();
   const config = getEffectiveConfig();
 

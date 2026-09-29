@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAuditedClaims } from "@/lib/audit";
 import { rejectionReasons } from "@/lib/rules/config";
 import { DecisionPanel } from "@/components/decision-panel";
+import { requirePageRole } from "@/lib/role";
 import { idr, dayName } from "@/lib/format";
 import { RiskBadge } from "@/components/risk-badge";
 import { ReceiptViewer } from "@/components/receipt-viewer";
@@ -10,6 +11,7 @@ import { ReceiptViewer } from "@/components/receipt-viewer";
 export const dynamic = "force-dynamic";
 
 export default async function ClaimDetail({ params }: { params: Promise<{ id: string }> }) {
+  await requirePageRole("finance");
   const id = Number((await params).id);
   const all = getAuditedClaims();
   const c = all.find((x) => x.id === id);
@@ -39,7 +41,7 @@ export default async function ClaimDetail({ params }: { params: Promise<{ id: st
         <RiskBadge risk={c.risk} className="px-4 py-1.5 text-base" />
       </div>
 
-      <DecisionPanel id={c.id} status={c.audit_status} reason={c.audit_reason} note={c.audit_note}
+      <DecisionPanel id={c.id} status={c.audit_status} reason={c.audit_reason} note={c.audit_note} by={c.audited_by} at={c.audited_at}
         reasons={rejectionReasons} nextId={nextId} />
 
 

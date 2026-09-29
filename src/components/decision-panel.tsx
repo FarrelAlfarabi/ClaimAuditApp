@@ -13,11 +13,13 @@ type Props = {
   status: AuditStatus;
   reason: string | null;
   note: string | null;
+  by: string | null;
+  at: string | null;
   reasons: string[];
   nextId: number | null;
 };
 
-export function DecisionPanel({ id, status, reason, note, reasons, nextId }: Props) {
+export function DecisionPanel({ id, status, reason, note, by, at, reasons, nextId }: Props) {
   const [mode, setMode] = useState<"idle" | "reject">("idle");
   const [picked, setPicked] = useState<string>();
   const [text, setText] = useState("");
@@ -45,6 +47,14 @@ export function DecisionPanel({ id, status, reason, note, reasons, nextId }: Pro
         <div className="text-sm font-semibold">{status === "approved" ? "Approved" : "Rejected"}</div>
         {reason && <div className="text-sm">Reason: {reason}</div>}
         {note && <div className="text-sm text-muted-foreground">Note: {note}</div>}
+        {(by || at) && (
+          <div className="text-xs text-muted-foreground">
+            {by ? `By ${by}` : "Decided"}{at ? ` · ${new Date(at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })} WIB` : ""}
+          </div>
+        )}
+        {status === "approved" && (
+          <div className="text-xs text-muted-foreground">Payout: queued for disbursement (Dicairkan) · MOCK, no money moves in this demo</div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <button type="button" disabled={busy} onClick={() => start(() => undoDecision(id))}
             className="h-12 rounded-xl border bg-background text-sm font-medium">Undo</button>

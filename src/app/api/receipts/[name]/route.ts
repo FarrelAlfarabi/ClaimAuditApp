@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { UPLOAD_DIR } from "@/lib/db";
+import { getSessionUser } from "@/lib/role";
 
 const TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif" };
 
 export async function GET(_: Request, { params }: { params: Promise<{ name: string }> }) {
+  if (!(await getSessionUser())) return new Response("Not found", { status: 404 });
   const { name } = await params;
   // Only our own generated names: 64 hex chars + known extension. Blocks path traversal.
   if (!/^[a-f0-9]{64}\.(jpg|png|webp|gif)$/.test(name)) return new Response("Not found", { status: 404 });

@@ -1,5 +1,5 @@
 /** Message shown when a server call fails (usually the phone lost the hotspot/Wi-Fi). */
-export const NETWORK_ERROR = "Could not reach the server. Check the connection and try again. Nothing was saved.";
+export const NETWORK_ERROR = "Could not save. Check the connection and try again; if it keeps failing, sign in again. Nothing was saved.";
 
 /**
  * Runs a server action from the client without letting a network failure crash the page.

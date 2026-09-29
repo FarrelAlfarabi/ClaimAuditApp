@@ -1,4 +1,5 @@
 import { getAuditedClaims } from "@/lib/audit";
+import { getSessionUser } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
 
@@ -9,18 +10,19 @@ const cell = (v: unknown) => {
 
 /** Verified (approved) claims as CSV. UTF-8 BOM + CRLF so Excel opens it cleanly with the right encoding. */
 export async function GET() {
+  if ((await getSessionUser())?.role !== "finance") return new Response("Forbidden", { status: 403 });
   const rows = getAuditedClaims()
     .filter((c) => c.audit_status === "approved")
     .sort((a, b) => a.id - b.id);
   const header = [
     "Claim ID", "Employee (MOCK)", "Department (MOCK)", "Category", "Merchant", "Amount (IDR)",
-    "Transaction date", "Transaction time", "Risk", "Score", "Flags", "Audit status", "Audited at",
+    "Transaction date", "Transaction time", "Risk", "Score", "Flags", "Audit status", "Audited at", "Audited by",
   ];
   const lines = rows.map((c) =>
     [
       c.id, c.employee_name, c.department_name, c.category, c.merchant, c.amount,
       c.transaction_date, c.transaction_time, c.risk, c.score, c.hits.map((h) => h.rule).join(" | "),
-      c.audit_status, c.audited_at,
+      c.audit_status, c.audited_at, c.audited_by,
     ].map(cell).join(",")
   );
   const csv = "﻿" + [header.join(","), ...lines].join("\r\n") + "\r\n";

@@ -1,10 +1,12 @@
 import { getEffectiveConfig, isCustomized } from "@/lib/settings";
 import { RulesForm } from "@/components/rules-form";
 import { ResetDemo } from "@/components/reset-demo";
+import { requirePageRole } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requirePageRole("finance");
   const c = getEffectiveConfig();
   return (
     <div className="space-y-4">

@@ -42,3 +42,5 @@ next-env.d.ts
 
 # local SQLite demo DB (regenerate with npm run seed)
 /data/*.db*
+!.env.example
+/data/uploads/

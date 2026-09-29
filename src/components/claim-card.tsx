@@ -50,7 +50,7 @@ export function ClaimCard({ c, t, mine }: { c: AuditedClaim; t: Dict; mine?: boo
   }
 
   return (
-    <Link href={`/claims/${c.id}`} className="card flex flex-col gap-1.5 p-4 text-inherit no-underline transition-colors hover:border-border-strong active:bg-card-2">
+    <Link href={`/claims/${c.id}`} className="card flex flex-col gap-1.5 p-4 text-inherit no-underline hover:border-border-strong active:bg-card-2">
       {top}
       {body}
       {c.hits.length > 0 && (

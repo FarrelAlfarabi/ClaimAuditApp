@@ -126,6 +126,12 @@
   border-color: var(--border);
 }
 
+/* Taps respond at once (no 300 ms double-tap wait) and use our own press feedback, not the grey browser flash. */
+a, button, label, summary, select {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -150,9 +156,14 @@ body {
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 20px;
     border-radius: 14px; font-size: 16px; font-weight: 700; border: 1.5px solid transparent; cursor: pointer;
-    text-decoration: none; text-align: center; line-height: 1.2; transition: background-color .15s, transform .05s;
+    text-decoration: none; text-align: center; line-height: 1.2;
+    transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .12s cubic-bezier(.2,.8,.2,1), background-color .15s;
   }
-  .btn:active:not(:disabled) { transform: translateY(1px); }
+  /* Pressed key: buttons with a ledge sink into it; flat buttons shrink a little. */
+  .btn:active:not(:disabled) { transform: scale(.97); }
+  .btn-primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--primary-strong); }
+  .btn-danger:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--danger-strong); }
+  .btn-preview:active:not(:disabled) { transform: none; }
   .btn:disabled { cursor: not-allowed; opacity: 0.55; box-shadow: none; }
   .btn-sm { min-height: 44px; padding: 0 14px; font-size: 15px; border-radius: 12px; }
   .btn-primary { background: var(--primary); color: var(--on-primary); box-shadow: 0 3px 0 var(--primary-strong); }
@@ -173,18 +184,30 @@ body {
   .icon-btn {
     width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     border-radius: 12px; border: 1.5px solid var(--border-strong); background: var(--card); color: var(--ink-2); cursor: pointer;
+    transition: transform .12s cubic-bezier(.2,.8,.2,1), background-color .15s;
   }
+  .icon-btn:active { transform: scale(.92); }
 
   .chip {
     display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px;
     border: 1.5px solid var(--border-strong); background: var(--card); color: var(--ink-2); font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: transform .12s cubic-bezier(.2,.8,.2,1), background-color .15s, border-color .15s, color .15s;
   }
+  .chip:active { transform: scale(.94); }
   .chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
   .filter-chip {
     display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 14px; border-radius: 999px;
     background: var(--primary-soft); border: 1.5px solid color-mix(in srgb, var(--primary) 30%, transparent);
     color: var(--primary-ink); font-size: 14px; font-weight: 700; text-decoration: none;
+    transition: transform .12s cubic-bezier(.2,.8,.2,1);
   }
+  .filter-chip:active { transform: scale(.94); }
+
+  /* Tappable cards, tab links and menu items: a light squeeze. Add to any element that should feel pressable. */
+  .press { transition: transform .12s cubic-bezier(.2,.8,.2,1), background-color .15s; }
+  .press:active { transform: scale(.96); }
+  a.card { transition: transform .12s cubic-bezier(.2,.8,.2,1), border-color .15s, background-color .15s; }
+  a.card:active { transform: scale(.985); }
 
   .field-label { display: block; margin-bottom: 6px; font-size: 15px; font-weight: 700; color: var(--ink); }
   .field-label .opt { font-weight: 500; color: var(--muted); }
@@ -244,4 +267,10 @@ body {
   .points-strong { background: var(--ink); color: var(--card); }
 
   .skeleton { background: linear-gradient(90deg, var(--card-2), var(--border), var(--card-2)); border-radius: 8px; }
+}
+
+/* People who ask their phone for less motion get instant state changes, no movement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  .btn:active, .icon-btn:active, .chip:active, .filter-chip:active, .press:active, a.card:active { transform: none !important; }
 }

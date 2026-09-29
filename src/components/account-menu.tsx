@@ -21,7 +21,7 @@ function Segmented<V extends string>({ label, value, options, onPick }: {
       <div className="flex rounded-[14px] bg-card-2 p-1">
         {options.map((o) => (
           <button key={o.v} type="button" aria-pressed={value === o.v} onClick={() => onPick(o.v)}
-            className={cn("min-h-11 flex-1 rounded-[10px] px-2 text-sm font-bold",
+            className={cn("press min-h-11 flex-1 rounded-[10px] px-2 text-sm font-bold",
               value === o.v ? "bg-card text-primary-ink shadow-[var(--shadow-card)]" : "text-ink-2")}>
             {o.label}
           </button>
@@ -73,7 +73,7 @@ export function AccountMenu({ user, loginMode, theme: initialTheme, busy, onSwit
     <div ref={box} className="relative">
       <button ref={btn} type="button" aria-haspopup="true" aria-expanded={open} aria-label={`${t.menu.open}${who ? `: ${who}` : ""}`}
         onClick={() => setOpen((o) => !o)}
-        className="flex min-h-11 max-w-[46vw] items-center gap-2 rounded-xl border-[1.5px] border-border-strong bg-card py-1 pr-2 pl-3 text-left md:max-w-xs">
+        className="press flex min-h-11 max-w-[46vw] items-center gap-2 rounded-xl border-[1.5px] border-border-strong bg-card py-1 pr-2 pl-3 text-left md:max-w-xs">
         <span className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-sm font-bold text-ink">{who ?? t.menu.language}</span>
           {user && loginMode && <span className="truncate text-xs font-semibold text-muted-foreground">{roleName}</span>}

@@ -78,7 +78,7 @@ export function AppShell({ user, loginMode, theme, children }: { user: SessionUs
                 const on = tab.match(path);
                 return (
                   <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined}
-                    className={cn("inline-flex h-11 items-center rounded-full px-4 text-[15px] font-bold no-underline",
+                    className={cn("press inline-flex h-11 items-center rounded-full px-4 text-[15px] font-bold no-underline",
                       on ? "bg-primary-soft text-primary-ink" : "text-ink-2 hover:bg-card-2")}>
                     {tab.label(t)}
                   </Link>
@@ -102,7 +102,7 @@ export function AppShell({ user, loginMode, theme, children }: { user: SessionUs
               const on = tab.match(path);
               return (
                 <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined}
-                  className={cn("flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold no-underline",
+                  className={cn("press flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold no-underline",
                     on ? "text-primary-ink" : "text-muted-foreground")}>
                   <span className={cn("flex h-[30px] w-14 items-center justify-center rounded-full", on && "bg-primary-soft")}>
                     <tab.Icon size={22} />

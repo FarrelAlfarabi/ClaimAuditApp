@@ -44,3 +44,6 @@ next-env.d.ts
 /data/*.db*
 !.env.example
 /data/uploads/
+
+# personal Claude Code settings
+/.claude/settings.local.json

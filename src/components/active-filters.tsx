@@ -1,45 +1,44 @@
 import Link from "next/link";
-import { FLAG_LABELS, SORTS, type Filters } from "@/lib/claim-filters";
+import { SORTS, type Filters } from "@/lib/claim-filters";
 import { filterHref } from "@/lib/filter-url";
 import { idr } from "@/lib/format";
-import type { RuleId } from "@/lib/rules/engine";
-
-const STATUS: Record<string, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
+import { catLabel, type Dict } from "@/lib/i18n/dict";
+import type { RiskLevel, RuleId } from "@/lib/rules/engine";
+import { IconX } from "@/components/icons";
 
 /** Removable chips for every active filter, plus "Clear all". Plain links: works without JavaScript. */
-export function ActiveFilters({ basePath, f }: { basePath: string; f: Filters }) {
+export function ActiveFilters({ basePath, f, t }: { basePath: string; f: Filters; t: Dict }) {
   const chips: [keyof Filters | "amount" | "date", string][] = [];
   if (f.q) chips.push(["q", `“${f.q}”`]);
-  if (f.risk) chips.push(["risk", `Risk: ${f.risk}`]);
-  if (f.flag) chips.push(["flag", `Flag: ${FLAG_LABELS[f.flag as RuleId] ?? f.flag}`]);
-  if (f.category) chips.push(["category", f.category]);
+  if (f.risk) chips.push(["risk", t.filters.riskChip(t.risk[f.risk as RiskLevel] ?? f.risk)]);
+  if (f.flag) chips.push(["flag", t.filters.flagChip(t.flag[f.flag as RuleId] ?? f.flag)]);
+  if (f.category) chips.push(["category", catLabel(t, f.category)]);
   if (f.dept) chips.push(["dept", f.dept]);
-  if (f.status) chips.push(["status", STATUS[f.status] ?? f.status]);
-  if (f.emp) chips.push(["emp", `By ${f.emp}`]);
-  if (f.mgr) chips.push(["mgr", `Manager: ${f.mgr}`]);
-  if (f.by) chips.push(["by", f.by === "none" ? "Decided without login" : `Decided by ${f.by}`]);
-  if (f.hits) chips.push(["hits", f.hits === "0" ? "No flags" : f.hits === "1" ? "One flag" : "2+ flags"]);
-  if (f.day) chips.push(["day", f.day === "weekend" ? "Weekend" : "Weekday"]);
-  if (f.time) chips.push(["time", f.time === "with" ? "Time entered" : "No time"]);
-  if (f.src) chips.push(["src", f.src === "demo" ? "Submitted in demo" : "Sample data"]);
-  if (f.receipt) chips.push(["receipt", f.receipt === "with" ? "Has receipt" : "No receipt"]);
-  if (f.from || f.to) chips.push(["date", `${f.from ?? "…"} to ${f.to ?? "…"}`]);
-  if (f.min || f.max) chips.push(["amount", `${f.min ? idr(Number(f.min)) : "Rp 0"} to ${f.max ? idr(Number(f.max)) : "any"}`]);
-  if (f.sort && f.sort in SORTS) chips.push(["sort", `Sort: ${SORTS[f.sort as keyof typeof SORTS]}`]);
+  if (f.status) chips.push(["status", t.status[f.status as keyof Dict["status"]] ?? f.status]);
+  if (f.emp) chips.push(["emp", t.filters.empChip(f.emp)]);
+  if (f.mgr) chips.push(["mgr", t.filters.mgrChip(f.mgr)]);
+  if (f.by) chips.push(["by", f.by === "none" ? t.filters.byNone : t.filters.byChip(f.by)]);
+  if (f.hits) chips.push(["hits", t.filters.hitsChip[f.hits] ?? f.hits]);
+  if (f.day) chips.push(["day", t.filters.dayL[f.day] ?? f.day]);
+  if (f.time) chips.push(["time", t.filters.timeL[f.time] ?? f.time]);
+  if (f.src) chips.push(["src", t.filters.srcL[f.src] ?? f.src]);
+  if (f.receipt) chips.push(["receipt", f.receipt === "with" ? t.filters.hasReceipt : t.filters.noReceipt]);
+  if (f.from || f.to) chips.push(["date", t.filters.range(f.from ?? "…", f.to ?? "…")]);
+  if (f.min || f.max) chips.push(["amount", t.filters.range(f.min ? idr(Number(f.min)) : "Rp 0", f.max ? idr(Number(f.max)) : t.filters.any)]);
+  if (f.sort && f.sort in SORTS) chips.push(["sort", t.filters.sortChip(t.sort[f.sort as keyof typeof SORTS])]);
   if (!chips.length) return null;
 
   const without = (k: (typeof chips)[number][0]) =>
     filterHref(basePath, f, k === "date" ? { from: undefined, to: undefined } : k === "amount" ? { min: undefined, max: undefined } : { [k]: undefined });
 
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
+    <div className="flex flex-wrap items-center gap-2" aria-label={t.filters.active}>
       {chips.map(([k, label]) => (
-        <Link key={k} href={without(k)} scroll={false} aria-label={`Remove filter ${label}`}
-          className="inline-flex min-h-11 items-center gap-1 rounded-full border bg-background px-3 text-sm">
-          {label} <span aria-hidden className="text-muted-foreground">✕</span>
+        <Link key={k} href={without(k)} scroll={false} aria-label={t.filters.remove(label)} className="filter-chip">
+          {label} <IconX size={16} strokeWidth={2.6} />
         </Link>
       ))}
-      {chips.length > 1 && <Link href={basePath} scroll={false} className="min-h-11 px-2 py-2 text-sm underline">Clear all</Link>}
+      {chips.length > 1 && <Link href={basePath} scroll={false} className="btn btn-ghost btn-sm">{t.filters.clearAll}</Link>}
     </div>
   );
 }

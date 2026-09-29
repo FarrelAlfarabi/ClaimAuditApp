@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { getDict } from "@/lib/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getDict();
   return (
-    <div className="space-y-4 py-10 text-center">
-      <h1 className="text-lg font-semibold">Not found</h1>
-      <p className="text-sm text-muted-foreground">This claim or page does not exist. It may have been removed by a demo reset.</p>
-      <Link href="/" className="mx-auto flex h-12 max-w-xs items-center justify-center rounded-xl border text-sm font-medium">Back to queue</Link>
+    <div className="card mx-auto flex max-w-md flex-col items-center gap-3 px-5 py-8 text-center">
+      <h1 className="text-lg font-extrabold">{t.error.notFound}</h1>
+      <p className="text-sm text-muted-foreground">{t.error.notFoundBody}</p>
+      <Link href="/" className="btn btn-secondary w-full max-w-xs">{t.detail.back}</Link>
     </div>
   );
 }

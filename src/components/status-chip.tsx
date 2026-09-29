@@ -1,12 +1,14 @@
+"use client";
+
 import type { AuditStatus } from "@/lib/db";
+import { IconCheck, IconClock, IconX } from "@/components/icons";
+import { useT } from "@/components/i18n-provider";
 
-const styles: Record<AuditStatus, string> = {
-  pending: "border-muted-foreground/30 text-muted-foreground",
-  approved: "border-emerald-600 bg-emerald-50 text-emerald-800",
-  rejected: "border-red-600 bg-red-50 text-red-800",
-};
-const labels: Record<AuditStatus, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
+const ICON = { pending: IconClock, approved: IconCheck, rejected: IconX };
 
+/** Round outline pill with an icon: audit status, never confused with the square risk badge. */
 export function StatusChip({ status }: { status: AuditStatus }) {
-  return <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${styles[status]}`}>{labels[status]}</span>;
+  const t = useT();
+  const I = ICON[status];
+  return <span className={`status status-${status}`}><I size={14} strokeWidth={2.6} />{t.status[status]}</span>;
 }

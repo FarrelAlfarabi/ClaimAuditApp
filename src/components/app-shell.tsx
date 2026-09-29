@@ -5,31 +5,37 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { safe } from "@/lib/safe-action";
 import { ErrorNote } from "@/components/error-note";
+import { AccountMenu } from "@/components/account-menu";
+import { IconList, IconPlus, IconQueue, IconReceipt, IconShield, IconSparkle, IconTable } from "@/components/icons";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 import { setRoleAction, signOutAction } from "@/app/actions";
 import type { Role, SessionUser } from "@/lib/role";
+import type { Dict } from "@/lib/i18n/dict";
+import type { Theme } from "@/lib/i18n/server";
 
-type Tab = { href: string; label: string; match: (p: string) => boolean };
+type Tab = { href: string; label: (t: Dict) => string; Icon: (p: { size?: number }) => React.ReactNode; match: (p: string) => boolean };
 
 const TABS: Record<Role, Tab[]> = {
   finance: [
-    { href: "/", label: "Queue", match: (p) => p === "/" || /^\/claims\/\d+/.test(p) },
-    { href: "/claims", label: "All claims", match: (p) => p === "/claims" },
-    { href: "/settings", label: "Rules", match: (p) => p === "/settings" },
-    { href: "/preview", label: "Coming", match: (p) => p.startsWith("/preview") },
+    { href: "/", label: (t) => t.nav.queue, Icon: IconQueue, match: (p) => p === "/" || /^\/claims\/\d+/.test(p) },
+    { href: "/claims", label: (t) => t.nav.allClaims, Icon: IconTable, match: (p) => p === "/claims" },
+    { href: "/settings", label: (t) => t.nav.rules, Icon: IconShield, match: (p) => p === "/settings" },
+    { href: "/preview", label: (t) => t.nav.coming, Icon: IconSparkle, match: (p) => p.startsWith("/preview") },
   ],
   employee: [
-    { href: "/submit", label: "Submit", match: (p) => p.startsWith("/submit") },
-    { href: "/my", label: "My claims", match: (p) => p === "/my" },
-    { href: "/preview", label: "Coming", match: (p) => p.startsWith("/preview") },
+    { href: "/submit", label: (t) => t.nav.submit, Icon: IconPlus, match: (p) => p.startsWith("/submit") },
+    { href: "/my", label: (t) => t.nav.myClaims, Icon: IconList, match: (p) => p === "/my" },
+    { href: "/preview", label: (t) => t.nav.coming, Icon: IconSparkle, match: (p) => p.startsWith("/preview") },
   ],
 };
 
 /**
- * Phone-first shell: sticky top bar + bottom tabs for the current role.
- * With login: shows who is signed in and a Sign out button. Without login: the demo role switcher.
+ * Phone-first shell: sticky top bar (app name, MOCK tag, account menu) + bottom tabs; on laptop the tabs move into the top bar.
+ * The account menu holds language, theme, sign out, and the demo role switcher when login is off.
  */
-export function AppShell({ user, loginMode, children }: { user: SessionUser | null; loginMode: boolean; children: React.ReactNode }) {
+export function AppShell({ user, loginMode, theme, children }: { user: SessionUser | null; loginMode: boolean; theme: Theme; children: React.ReactNode }) {
+  const t = useT();
   const role = user?.role ?? null;
   const path = usePathname();
   const [busy, go] = useTransition();
@@ -54,55 +60,60 @@ export function AppShell({ user, loginMode, children }: { user: SessionUser | nu
   // Errors belong to the screen they happened on; clear them when the page changes.
   useEffect(() => setErr(undefined), [path]);
   return (
-    <div className="min-h-dvh bg-muted/40">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4">
-          <div className="min-w-0">
-            <div className="truncate text-base font-semibold leading-tight">Claim Audit</div>
-            <div className="text-[11px] font-medium leading-tight text-amber-800">DEMO · MOCK DATA</div>
-          </div>
-          {loginMode ? (
-            user && (
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="min-w-0 text-right">
-                  <div className="truncate text-xs font-medium">{user.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{user.role === "finance" ? "Finance" : "Employee"}</div>
-                </div>
-                <button type="button" disabled={busy} onClick={signOut}
-                  className="h-11 shrink-0 rounded-full border px-3 text-sm font-medium">Sign out</button>
-              </div>
-            )
-          ) : (
-            <div role="group" aria-label="Demo role" className="flex rounded-full border p-0.5 text-sm">
-              {(["employee", "finance"] as Role[]).map((r) => (
-                <button key={r} type="button" disabled={busy} aria-pressed={role === r}
-                  onClick={() => role !== r && switchRole(r)}
-                  className={cn("h-11 min-w-11 rounded-full px-3 font-medium", role === r ? "bg-foreground text-background" : "text-muted-foreground")}>
-                  {r === "employee" ? "Employee" : "Finance"}
-                </button>
-              ))}
-            </div>
+    <div className="min-h-dvh bg-background">
+      <header className="sticky top-0 z-20 border-b bg-card/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 py-2">
+          <Link href={role === "employee" ? "/submit" : "/"} className="flex min-w-0 items-center gap-2.5 text-inherit no-underline">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_3px_0_var(--accent)]">
+              <IconReceipt size={22} strokeWidth={2} />
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-[17px] font-extrabold leading-tight tracking-tight text-ink">{t.app.name}</span>
+              <span className="mock-tag self-start">{t.app.mockTag}</span>
+            </span>
+          </Link>
+          {tabs.length > 0 && (
+            <nav aria-label={t.nav.main} className="ml-4 hidden gap-1 md:flex">
+              {tabs.map((tab) => {
+                const on = tab.match(path);
+                return (
+                  <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined}
+                    className={cn("press inline-flex h-11 items-center rounded-full px-4 text-[15px] font-bold no-underline",
+                      on ? "bg-primary-soft text-primary-ink" : "text-ink-2 hover:bg-card-2")}>
+                    {tab.label(t)}
+                  </Link>
+                );
+              })}
+            </nav>
           )}
+          <div className="ml-auto">
+            <AccountMenu user={user} loginMode={loginMode} theme={theme} busy={busy} onSwitchRole={switchRole} onSignOut={signOut} />
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 pt-4 pb-24">
+      <main className="mx-auto max-w-6xl px-4 pt-5 pb-32 md:pb-12">
         {err && <div className="mb-4"><ErrorNote msg={err} /></div>}
         {children}
       </main>
-      {tabs.length > 0 && <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-5xl" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
-          {tabs.map((t) => {
-            const on = t.match(path);
-            return (
-              <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}
-                className={cn("-mt-px flex h-14 items-center justify-center border-t-2 text-sm font-medium",
-                  on ? "border-foreground text-foreground" : "border-transparent text-muted-foreground")}>
-                {t.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>}
+      {tabs.length > 0 && (
+        <nav aria-label={t.nav.main} className="fixed inset-x-0 bottom-0 z-20 border-t bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_16px_rgb(18_32_58/0.06)] md:hidden">
+          <div className="mx-auto grid max-w-lg px-2 pt-1.5 pb-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+            {tabs.map((tab) => {
+              const on = tab.match(path);
+              return (
+                <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined}
+                  className={cn("press flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold no-underline",
+                    on ? "text-primary-ink" : "text-muted-foreground")}>
+                  <span className={cn("flex h-[30px] w-14 items-center justify-center rounded-full", on && "bg-primary-soft")}>
+                    <tab.Icon size={22} />
+                  </span>
+                  {tab.label(t)}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

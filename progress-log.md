@@ -248,3 +248,23 @@ Entry format: Date/time | Stage | % complete | Blocker | Hours left to Wed demo,
 **Risks:** every screen now needs internet, not just login. Free Supabase projects pause after a week idle. If the hotspot has no mobile data, use the offline fallback (runbook).
 
 **Addendum ~19:00 WIB: merge with the UI refresh.** While this work was being pushed, the build branch had 3 new commits from the Claude Design work (new design tokens, dark mode, Bahasa Indonesia, press animations; `src/lib/i18n`, `tests/i18n.test.ts`). Merged, not overwritten (`cdeccec`). Four files conflicted (`actions.ts`, `submit.ts`, `submit/page.tsx`, `settings/page.tsx`); each resolved by keeping both: the translated messages and the async Supabase data calls. After the merge: tsc and eslint clean, 21/21 tests (16 engine + 5 translation), and the 12-step end-to-end run against Postgres passes again on the redesigned screens. I updated my test to the new markup (reject reasons are radio buttons, sign-out lives in the account menu); the app was not changed for that. `main` still has neither the UI refresh nor the Supabase data layer; both are only on the build branch.
+
+## 2026-10-12 | Plan v3.0: scope change to OCR + rules inside the Ruangguru ERP | Plan only, no code | Blockers: no ERP facts, no signed contract, no demo date | Hours: not tracked
+
+**What changed and why**
+- Farrel changed the objective: build OCR with rules (category suggestion, per-claim and monthly caps, duplicate checks) inside Ruangguru's existing ERP, instead of the standalone Claim Audit App. master-plan.md is now v3.0. The new scope is section 17; older sections carry SUPERSEDED or HISTORICAL notes and were not deleted.
+- Recorded decisions from this session: about 5,000 receipts a month (Farrel's figure, unconfirmed); own OCR only, Verihubs treated as a competitor; handwriting must be handled; the 30 Sep demo did not happen and there is no new date; pricing follows "Option A" as a scenario (Year 1 Rp166.4M against Verihubs' Rp162.0M, Year 3 Rp243.2M against Rp486.0M).
+- Maria's answers recorded: data stays local, OCR sets the category, caps are monthly per sub-category, duplicate check needed, total goes into the existing "amount proposed" field. Her tech team has not yet answered on third-party APIs.
+- New open questions OQ-28 to OQ-42 (ERP stack, integration route, test copy, claim data, caps and routing, login, server, existing OCR, third-party API, edit detection, flag vs reject, handwriting share, sample receipts, demo date, contract). All still open.
+
+**Verified:** the edits were checked by reading the diff and the table rows. No code changed; tests were not run because nothing in `src/` or `tests/` changed.
+
+**Not verified / mocked**
+- Nothing about the ERP is known. Every ERP item is UNKNOWN or MOCK in the plan (17.9).
+- Hours and the Rp400K/h rate behind the pricing scenario are guesses.
+- The OCR price per receipt is unconfirmed ($0.01 in the old plan against possibly $0.10 under Google's billing).
+- The own OCR engine does not exist yet. A FastAPI skeleton from an earlier chat (upload endpoint, mock engine) was never pushed and is not recoverable.
+
+**Discrepancies vs the previous plan (v2.6):** X-01 to X-12 in master-plan.md 9.1. Biggest: standalone app to ERP feature; OCR from Phase 2 to core; per-claim caps to monthly caps; Supabase/Vercel/Google conflict with "data stays local"; the old Phase 1 estimate and prices no longer apply.
+
+**Decisions awaiting Farrel:** approve this plan change (PR); new demo date; whether the Verihubs quote figures may stay in a public repo (see PR note).

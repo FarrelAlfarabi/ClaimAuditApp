@@ -1,10 +1,12 @@
 # Master Plan: Ruangguru Claim Audit App
 
-**Version:** 2.6
-**Date:** 29 Sep 2026 (Tue)
+**Version:** 3.0
+**Date:** 12 Oct 2026 (Mon)
 **Owner:** Farrel
-**Demo:** Wed 30 Sep 2026, time TBC (see OQ-01)
-**Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. Every change bumps the version and adds a decision log row in the same commit.
+**Demo:** the Wed 30 Sep 2026 demo did not happen (per Farrel, 12 Oct). **No new date yet** (OQ-41)
+**Status of this document:** source of truth for scope, stages, money, decisions and open questions for the Ruangguru deal. **From v3.0 the current scope is section 17.** Every change bumps the version and adds a decision log row in the same commit.
+
+**What changed in v3.0 (scope change, 12 Oct 2026):** Farrel changed the objective: build an **OCR system with rules (category and monthly caps, category suggestion, duplicate checks) inside Ruangguru's existing ERP app**, instead of the standalone Claim Audit App. The new direction is section 17, which is the source of truth for scope from now on. Sections 1 to 5, 10 to 14 and the old Wednesday plan describe the earlier standalone product: they are kept for history, each carries a "SUPERSEDED" or "HISTORICAL" note, and **their hours, prices and stage plan must not be quoted for the new scope**. Also changed: 6.2 (OQ notes, new OQ-28 to OQ-42), 7 (new risks), 8 (decision log), 9.1 (new discrepancies X-01 to X-12), 16 (sources). Nothing in the ERP is known yet (stack, API, claim data, approval hierarchy, cap amounts); every such item is an open question, not an assumption. **No signed contract exists for the new scope (OQ-11, OQ-42).**
 
 **What changed in v2.6:** claims data now lives in Supabase Postgres, as Farrel asked ("save claims to database, apply in supabase"). Reverses the v2.4 decision that data stays in local SQLite. Claims, employees, rule changes and receipt photos are stored in the Supabase project; the database itself decides who may read or write (row level security plus role-checked functions). Local SQLite stays as the offline fallback (`AUTH_DISABLED=1`). Also corrected stale status rows (v2.4 and v2.5 work is on `main`). Changed: 4.4, 5.1, 6.2 (OQ-27), 7, 8.
 
@@ -22,11 +24,13 @@
 
 Related: PRD v0.1 (Claude Doc, 28 Sep 2026, Indonesian, stakeholder-facing). Written before the deadline and scope decision. Where it differs from this plan, this plan wins until the PRD is revised (see section 9).
 
-**Contents:** 1 Goals · 2 Scope · 3 Users and roles · 4 Wednesday milestones · 5 Tech decisions · 6 Assumptions and open questions · 7 Risks · 8 Decision log · 9 PRD discrepancies · 10 Deal and stages · 11 Commercial terms and change control · 12 Financials · 13 Growth within Ruangguru · 14 Dependencies on Ruangguru · 15 Review cadence · 16 Sources
+**Contents:** 1 Goals · 2 Scope · 3 Users and roles · 4 Wednesday milestones · 5 Tech decisions · 6 Assumptions and open questions · 7 Risks · 8 Decision log · 9 PRD discrepancies · 10 Deal and stages · 11 Commercial terms and change control · 12 Financials · 13 Growth within Ruangguru · 14 Dependencies on Ruangguru · 15 Review cadence · 16 Sources · 17 v3.0 direction: OCR and rules inside the Ruangguru ERP
 
 ---
 
 ## 1. Goals
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
 
 ### 1.1 Goal for Wednesday (what the demo must prove)
 
@@ -74,6 +78,9 @@ No target numbers are set until Ruangguru gives baselines. Do not quote targets 
 ---
 
 ## 2. Scope
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> What was built as a demo (Next.js, SQLite/Supabase, Finance queue) stays in the repo, frozen and labeled MOCK. It is not the product.
 
 ### 2.1 Wednesday demo: real vs. mocked
 
@@ -144,6 +151,9 @@ Effort estimate per item: section 12.1.
 
 ## 3. Users and roles
 
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> In the ERP, roles come from the ERP (OQ-33). Do not build a separate role table.
+
 | Role | Wednesday demo | Phase 1 |
 |---|---|---|
 | Employee | Demo login (MOCK account linked to one MOCK employee), submit form, own claims list | Submits claims, tracks status |
@@ -160,6 +170,8 @@ Commercial roles (who Farrel deals with) are in section 10.1.
 ---
 
 ## 4. Milestones for Wednesday (Mon 28 Sep to Wed 30 Sep)
+
+> **HISTORICAL (v3.0).** The 30 Sep demo did not happen and the standalone app is no longer the product. Kept as a record of what was built and planned.
 
 Stages after Wednesday are in section 10.
 
@@ -232,6 +244,8 @@ Open risks that can still break Wednesday: first real Supabase sign-in untested;
 
 ### 5.1 to 5.2 Demo stack (Wednesday)
 
+> **HISTORICAL (v3.0).** The 30 Sep demo did not happen and the standalone app is no longer the product. Kept as a record of what was built and planned.
+
 Picked for speed with Farrel's existing React/Vercel experience.
 
 | Area | Decision | Trade-off |
@@ -247,6 +261,8 @@ Picked for speed with Farrel's existing React/Vercel experience.
 
 ### 5.3 Risk scoring (placeholder, config-driven)
 
+> **Still valid as the engine's default (v3.0)**, with placeholder weights (MOCK). Real weights, caps and categories come from Ruangguru's policy (OQ-04, OQ-32).
+
 | Rule hit | Points |
 |---|---|
 | Over category limit | 3 |
@@ -259,6 +275,9 @@ Picked for speed with Farrel's existing React/Vercel experience.
 Total 0 = Low, 1 to 2 = Medium, 3 or more = High. Flags mark a claim for review; the engine never auto-rejects in the demo (see A-03). Real weights are set with Finance in Stage 1.
 
 ### 5.4 Production stack (Phase 1), proposed, pending Farrel review
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> The language and hosting now depend on the ERP and on where Ruangguru allows data to live (OQ-28, OQ-34, OQ-36). Supabase Singapore and Vercel conflict with Maria's answer that data must stay on a local server or the company's private cloud.
 
 Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only what the demo faked. One developer has to maintain this, so fewer moving parts beats "best" parts.
 
@@ -277,6 +296,9 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | Audit trail | Append-only log table: who did what to which claim or rule, and when | Needed for any finance tool; cheap if built in from day one, expensive later. |
 
 ### 5.5 Phase 2 additions (not priced in Phase 1)
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> OCR and ERP link are now core scope (17.2). Google Document AI is not a decision: it is a third-party cloud service and Ruangguru's tech team has not answered (OQ-36). Its price (about $0.01 per receipt) is **unconfirmed**; one source suggests billing in 10-page blocks, which would make a one-page receipt about $0.10. Check Google's pricing calculator before quoting.
 
 - OCR: Google Document AI Expense Parser, about $0.01 per single-page receipt (section 12.4). Alternative providers compared in Phase 2 discovery.
 - HRIS/ERP sync: depends entirely on the system Ruangguru uses (OQ-08). No stack choice until known.
@@ -307,25 +329,25 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | ID | Question | Owner | Blocks |
 |---|---|---|---|
 | ~~OQ-00~~ | ~~How many hours can Farrel actually build Mon and Tue?~~ **Answered:** day job is low effort, projects infrequent; daytime hours usable both days, ~15h total to Wed AM. | Farrel | Closed |
-| OQ-01 | Demo time, format (in person or online), and who attends | Farrel to ask financial lead | **Wednesday** (sets the last build cutoff) |
-| OQ-02 | What exactly was agreed for Wednesday: a look-and-feel check, or a go/no-go on Phase 1? | Farrel to confirm with financial lead | **Wednesday** (sets what "success" means in the room) |
+| OQ-01 | Demo time, format (in person or online), and who attends | Farrel to ask financial lead | **Wednesday** (sets the last build cutoff) **v3.0:** The 30 Sep demo did not happen. See OQ-41 (new date, format, attendees). |
+| OQ-02 | What exactly was agreed for Wednesday: a look-and-feel check, or a go/no-go on Phase 1? | Farrel to confirm with financial lead | **Wednesday** (sets what "success" means in the room) **v3.0:** Moot for 30 Sep. What the next demo must prove is OQ-41. |
 | OQ-03 | Can Ruangguru share 1 to 2 real reimbursement policy points (e.g. meal limit) before Wed, to make the config feel real? | Financial lead | Nothing. Nice to have. |
-| OQ-04 | Real expense categories and per-category limits | Financial lead | Stage 1 exit |
+| OQ-04 | Real expense categories and per-category limits | Financial lead | Stage 1 exit **v3.0:** Maria: categories have sub-categories, and some have monthly caps (example: fuel). Cap amounts still unknown (OQ-32). |
 | OQ-05 | Working hours and whether weekend work is normal for some teams (events, sales, tutors) | Financial lead / HR | Stage 1 exit. Weekend flag may be noisy for Ruangguru; mention in demo. |
-| OQ-06 | Approval hierarchy and the high-value escalation threshold (PRD has an open comment on this) | Financial lead / HR | Stage 1 exit |
+| OQ-06 | Approval hierarchy and the high-value escalation threshold (PRD has an open comment on this) | Financial lead / HR | Stage 1 exit **v3.0:** Maria linked category to who approves. Whether the ERP already routes approval is unknown (OQ-32). |
 | OQ-07 | Baselines: claims per month, auditors, audit time per claim, days to payout | Financial lead | Stage 1 exit (metrics); ask Wed |
-| OQ-08 | Current HRIS / ERP / accounting system and export format | Financial lead / IT | Phase 2 pricing |
-| OQ-09 | Hosting and data rules: must it run on Ruangguru infrastructure or in an Indonesian region? Where can receipts be stored (UU PDP, cross-border transfer rules)? Does IT have a required stack? | Ruangguru IT / legal | **Stage 1 exit** (changes the stack and the price) |
-| OQ-10 | Can Ruangguru give an anonymized export of past claims to test the engine on real data? | Financial lead | Stage 1 exit (strongest follow-up ask) |
-| OQ-11 | Commercial terms after Wednesday: is Phase 1 already agreed, or does it depend on the demo? Scope, price, timeline in writing? | Farrel | **Stage 1 exit**; no Phase 1 code before it |
+| OQ-08 | Current HRIS / ERP / accounting system and export format | Financial lead / IT | Phase 2 pricing **v3.0:** Promoted: the ERP is now the core of the work. See OQ-28 to OQ-35. |
+| OQ-09 | Hosting and data rules: must it run on Ruangguru infrastructure or in an Indonesian region? Where can receipts be stored (UU PDP, cross-border transfer rules)? Does IT have a required stack? | Ruangguru IT / legal | **Stage 1 exit** (changes the stack and the price) **v3.0:** Partly answered by Maria Q3: **data must stay on a local server or the company's private cloud.** Legal sign-off and which server are still open (OQ-34). Third-party API question is OQ-36. |
+| OQ-10 | Can Ruangguru give an anonymized export of past claims to test the engine on real data? | Financial lead | Stage 1 exit (strongest follow-up ask) **v3.0:** Still wanted, and now also a sample of real receipt photos (OQ-40). |
+| OQ-11 | Commercial terms after Wednesday: is Phase 1 already agreed, or does it depend on the demo? Scope, price, timeline in writing? | Farrel | **Stage 1 exit**; no Phase 1 code before it **v3.0:** **Scope changed again before any contract.** Nothing in writing for the ERP scope (OQ-42). |
 | OQ-12 | Is a price or budget already agreed or set aside for this? Roughly what range, and which budget year does it come from? | Farrel to ask financial lead | Proposal (Stage 1); ask Wed |
-| OQ-13 | Why custom instead of buying a tool like Mekari Expense (section 12.3)? What have they tried, what did they dislike? | Farrel to ask financial lead | Proposal positioning; ask Wed |
-| OQ-14 | How many employees would submit claims, and how many claims a month? | Financial lead | Proposal (sizing, buy-vs-build comparison, OCR cost); ask Wed |
+| OQ-13 | Why custom instead of buying a tool like Mekari Expense (section 12.3)? What have they tried, what did they dislike? | Farrel to ask financial lead | Proposal positioning; ask Wed **v3.0:** Reworded: the alternative is now Verihubs for the OCR part (competitor, per Farrel) or the ERP vendor's own OCR, if any (OQ-35). |
+| OQ-14 | How many employees would submit claims, and how many claims a month? | Financial lead | Proposal (sizing, buy-vs-build comparison, OCR cost); ask Wed **v3.0:** Farrel states **about 5,000 receipts a month**. This is Farrel's figure, not confirmed by Ruangguru. Employee count still unknown. |
 | OQ-15 | Vendor onboarding: can Ruangguru contract an individual, or only a company (PT/CV)? Required documents (NPWP, NIB, PKP status)? Standard payment term (e.g. 30 days after invoice)? | Financial lead / procurement | **SOW signing** |
 | OQ-16 | Does Ruangguru use company login (Google Workspace or Microsoft) that the app can use? | Ruangguru IT | Phase 1 build start |
 | OQ-17 | Does Farrel's employment contract at his current employer restrict paid outside work, or require notice/approval? | Farrel | **SOW signing** |
 | OQ-18 | Which entity invoices: Farrel personally, Lumenify, or the planned PT? | Farrel | **SOW signing** (depends on OQ-15 and OQ-17) |
-| OQ-19 | Who pays running costs (hosting, email, OCR): Ruangguru directly, or Farrel re-bills them? | Financial lead | Proposal |
+| OQ-19 | Who pays running costs (hosting, email, OCR): Ruangguru directly, or Farrel re-bills them? | Financial lead | Proposal **v3.0:** Now includes: who pays for the server that runs the OCR service. Test server cost is Farrel's (17.6). |
 | OQ-20 | Can Farrel keep and reuse the generic parts (rules engine, audit queue) for other clients, and cite Ruangguru as a reference? | Financial lead / legal | SOW signing (IP clause); does not block build |
 | OQ-21 | Support expectations after go-live: working hours only or 24/7, response time for "can't submit claims" vs. small bugs | Financial lead | Proposal (retainer size) |
 | OQ-22 | Is the Wednesday demo work paid, or part of the sales effort? | Farrel | Nothing; record the answer for the effective rate |
@@ -334,6 +356,21 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | ~~OQ-25~~ | ~~Does Finance audit on phones, or was "mobile" meant for employees?~~ **Answered (Farrel, 28 Sep):** Finance uses both phone and desktop. Both Finance layouts are in Phase 1 (12.1). | Farrel | Closed |
 | OQ-26 | Does the demo phone's hotspot have reliable mobile data at the venue? Login needs internet for the whole demo. | Farrel | **Wednesday** (else run with `AUTH_DISABLED=1`) |
 | OQ-27 | Data location for Phase 1: the demo project is in Singapore (ap-southeast-1). Does Ruangguru accept that region for employee data (UU PDP, OQ-09)? | Ruangguru IT / legal | Stage 1 exit (extends OQ-09) |
+| OQ-28 | What is the ERP built on (language, framework, vendor product or in-house)? Who maintains it? | Ruangguru IT / ERP team | Everything technical. UNKNOWN |
+| OQ-29 | How can outside code connect: API, webhook, plugin, database access, or only changes by their own team? Who approves a change to the ERP? | Ruangguru IT / ERP team | Integration design, effort, price. UNKNOWN |
+| OQ-30 | Is there a test copy of the ERP with fake data that Farrel may use? | Ruangguru IT | Any real ERP demo. UNKNOWN. Without it, every ERP screen in a demo is MOCK |
+| OQ-31 | How does a claim look in the ERP: fields, categories, sub-categories, where the "amount proposed" field lives, where receipt photos are stored? | ERP team / Finance | Field mapping. Only known: an "amount proposed" field exists (Maria Q4). Rest UNKNOWN |
+| OQ-32 | Does the ERP already hold category caps, approval routing and per-employee claim history? What are the cap amounts, and does a cap apply per employee, per team or per company? Maria said caps are monthly per sub-category and set in the regulation. | Finance / ERP team | Monthly cap rule. Amounts and scope UNKNOWN |
+| OQ-33 | How do users log in to the ERP, and how would the new service know who is calling? | ERP team | Security design. UNKNOWN |
+| OQ-34 | Which server or private cloud may run the OCR and rules service, and who approves access? Is real data allowed for testing, and when? | Ruangguru IT / legal | Hosting, test data. Local data is required (Maria Q3); the rest UNKNOWN |
+| OQ-35 | Does the ERP already have OCR, or is a vendor planned? How did Verihubs' quotation (dated 9 Oct 2026, addressed to Ruangguru) reach Ruangguru, and who asked for it? | Financial lead / ERP team | Competitive position. UNKNOWN |
+| OQ-36 | Is sending receipt photos to a third-party API allowed? **Maria is asking her tech team; answer pending.** | Ruangguru tech team (via Maria) | OCR engine choice: own engine on their server vs any cloud service. **Open** |
+| OQ-37 | "Duplicate or photo-edit detection": does Maria mean duplicates, edited photos, or both? (Her answer to Q6 was "iya perlu".) | Maria | Scope. Photoshop detection is hard and is not in scope until it has its own line (17.2) |
+| OQ-38 | When a claim breaks a rule, should the system only flag it for Finance, or reject it? (Carries over A-03.) | Financial lead | Rules behavior. **Open** |
+| OQ-39 | Handwritten receipts: what share of the total? How should an unreadable one be handled? | Maria / Finance | Human-check design, accuracy claims |
+| OQ-40 | Can Ruangguru share 20 to 30 sample receipt photos (printed and handwritten, names hidden) for an accuracy test? | Maria | OCR accuracy claim. Farrel's own engine is unproven on Ruangguru receipts. UNKNOWN until tested |
+| OQ-41 | New demo date, format, attendees, and what it must prove. | Farrel to ask financial lead | Demo plan. **No date yet** |
+| OQ-42 | Contract for the ERP scope: price, timeline, entity, in writing. The scope changed again with no SOW. | Farrel | **No build beyond a short accuracy test before a signed SOW** (decision log 2026-09-28 still applies) |
 
 ---
 
@@ -365,6 +402,16 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | **Personal data rules** (receipts and employee data stored in a Singapore region = cross-border transfer; UU PDP transfer rules; a 2026 regulation, PP 33/2026, reportedly adds transfer obligations; the data protection authority is reportedly not yet set up) | Medium | High | Ruangguru IT/legal decides the region (OQ-09) before build; offer an Indonesian-region option priced separately; do not give legal advice, get Ruangguru's DPO/legal sign-off in writing |
 | **Stakeholder change** (financial lead leaves or loses budget) | Low | High | Get a second contact (procurement or Finance manager) involved in Stage 1; everything agreed in writing |
 | Tax surprise (withholding reduces cash received; final tax higher than withholding) | High | Low | Price excluding tax; confirm entity and treatment with a tax consultant before the first invoice (12.6) |
+| **v3.0: no access to the ERP** (stack, API, test copy all unknown) | High | High | Treat every ERP screen and link as MOCK until OQ-28 to OQ-30 are answered; no integration hours quoted before then |
+| **v3.0: third scope change, still no signed contract** | High | High | Re-price before building; only a short accuracy test as discovery (OQ-42) |
+| **v3.0: own OCR unproven on Ruangguru's receipts, especially handwriting** (Maria: some receipts are handwritten) | High | High | Accuracy test on sample photos (OQ-40); human-check path for low confidence; no accuracy promise in writing |
+| **v3.0: third-party API may be banned; data must stay local** (Maria Q2 pending, Q3 yes) | Medium | High | Own engine on Ruangguru's server is the plan; keep a design that works without any cloud service |
+| **v3.0: Verihubs is cheaper in Year 1** (Rp162.0M against Farrel's Rp166.4M scenario) and Farrel believes it handles handwriting; the quote is silent on that | Medium | Medium | Sell what Verihubs does not do (rules, caps, duplicates, ERP link, local hosting); do not claim Verihubs fails at handwriting |
+| **v3.0: ERP link effort is the biggest swing** (20 to 60 h, 40 more hours cuts Farrel's keep by about Rp10M) | High | High | Quote the ERP link only after OQ-28 to OQ-30 |
+| **v3.0: monthly caps need claim history from the ERP** | Medium | High | Confirm in OQ-32 before promising the rule |
+| **v3.0: edit/Photoshop detection agreed by accident** | Medium | High | Keep it out of scope until OQ-37 is answered and priced separately |
+| **v3.0: 5,000 receipts a month is Farrel's figure** | Medium | Medium | Confirm in OQ-14 before any volume-based price |
+| **v3.0: the receipt-API skeleton built in an earlier chat is not in this repo** (FastAPI, upload endpoint, mock engine; never pushed; not recoverable) | n/a | Low | Treat as lost; rebuild from the adapter idea once the ERP stack is known |
 
 ---
 
@@ -402,6 +449,16 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | 2026-09-29 | v2.5: search and complete filters on every claim list; static "Coming" preview screens for 10 planned features, labeled not working. | Farrel asked | Farrel |
 | 2026-09-29 | Previews are mock pictures only: no logic, no data writes, no commitment to scope or price. Phase 1 scope stays as in 2.2 and is set in the SOW. | Stop previews turning into unpriced promises | Thread 02, pending Farrel review |
 | 2026-09-29 | UI visual refresh briefed to Claude Design (docs/design-prompt.md): Ruangguru-like look and feel, no Ruangguru logos, names or trademarks; to be applied only after Wednesday unless it is a pure colour/type change. | Farrel asked; restyling the day before the demo risks breaking tested screens | Farrel (brief); timing by Thread 02, pending review |
+| 2026-10-12 | **v3.0 scope change:** build an OCR system with rules (category suggestion, per-claim and monthly caps, duplicate checks) inside Ruangguru's existing ERP, **replacing the standalone Claim Audit App.** Contradicts 1.2, 2.1 to 2.4, 3, 5.4, 10 to 12. | Farrel: "project task is changed, now objective is to implement this OCR system with rules to existing ruangguru ERP app" | Farrel |
+| 2026-10-12 | Volume assumed: about 5,000 receipts a month. | Farrel's figure; Ruangguru has not confirmed it (OQ-14) | Farrel (unconfirmed) |
+| 2026-10-12 | Build **own OCR** only. Verihubs is a competitor and is **not** used as the OCR engine (their quote is price context only). Contradicts 5.5 (Google Document AI as a candidate) and the earlier note that OCR is bought, not built. | Farrel: Verihubs is a competitor | Farrel |
+| 2026-10-12 | Handwritten receipts must be handled, with a human-check path for low confidence. No accuracy promise. | Maria Q1: mostly printed, some handwritten. Farrel says Verihubs handles handwriting (told in a meeting; not in the written quote) | Farrel; Maria's answer |
+| 2026-10-12 | Data stays on a local server or the company's private cloud. Contradicts 5.4 (Supabase Singapore, Vercel) and 5.5 (Google Document AI). | Maria Q3 | Maria (Ruangguru side) |
+| 2026-10-12 | Rules in scope, from Maria's answers: OCR sets the category (e.g. Gojek is Transport); caps are monthly per sub-category; duplicate detection needed; the total goes into the existing "amount proposed" field. Photo-edit detection is **not** in scope until OQ-37 is answered. Contradicts A-05 ("no image recognition") and the per-claim-only cap in the engine. | Maria Q4, Q6, Q7 | Maria's answers; scope line by Thread 02, pending Farrel review |
+| 2026-10-12 | The 30 Sep demo did not happen; no new date. The Wednesday sprint plan (4) is closed as history. | Farrel, 12 Oct | Farrel |
+| 2026-10-12 | Pricing: Option A, own OCR plus rules layer, Rp400K/h, 24 h discovery, 320 h build, 8 h a month retainer from month 4. **A scenario, not a quote.** Option C (Verihubs as engine) rejected. Supersedes 12.1 and 12.2. | summary-5000-receipts.md (12 Oct); hours and rate are guesses | Thread 02, pending Farrel review |
+| 2026-10-12 | The old demo app (Next.js, SQLite/Supabase) stays in the repo, frozen, labeled MOCK, not extended for the ERP scope. | Avoid throwing away tested rules code; avoid implying it is the product | Thread 02, pending Farrel review |
+| 2026-10-12 | Language and framework for the new service are **not decided.** They follow the ERP (OQ-28, OQ-29). An earlier FastAPI skeleton exists outside this repo and is not recoverable. | No ERP facts yet | Thread 02, pending Farrel review |
 
 ---
 
@@ -420,9 +477,29 @@ Principle: keep the demo's code (Next.js + TypeScript + engine) and swap only wh
 | D-10 | Dashboard 2.4 "Tampilan split-screen": data beside receipt | On a phone, receipt and data are stacked on one screen with tap-to-zoom; side by side only on laptop | Reword PRD 2.4 |
 | D-09 | No commercial section, no stages, no support after launch | Sections 10 and 11 | Thread 01 turns these into the Indonesian proposal/SOW after Stage 1 |
 
+### 9.1 Discrepancies introduced by v3.0 (old plan against the ERP scope)
+
+| ID | Old plan says | v3.0 says | Where |
+|---|---|---|---|
+| X-01 | Standalone app with its own login, employee form and Finance queue | Feature inside the existing ERP | 1.2, 2.1, 2.2, 3, 5.4 |
+| X-02 | OCR is Phase 2, separate contract, not real in the demo | OCR is the core of the work | 2.3, 5.5, 10.2 stage 7 |
+| X-03 | Duplicate = data match + file hash, no image recognition (A-05, D-05) | Duplicate check from receipt content is needed (Maria Q6). Edit detection unclear (OQ-37) | A-05, 2.1 |
+| X-04 | Category limit is per claim, per category | Cap is monthly per sub-category, needs claim history | engine.ts, rules.config.json |
+| X-05 | Employee picks the category | OCR suggests the category from the merchant | 2.1 |
+| X-06 | Flag only, never reject (A-03) | Not decided (OQ-38) | A-03 |
+| X-07 | Approval routing is mocked, built in Phase 1 M2 | Maria links category to approver; ERP may already route (OQ-32) | 2.2 item 3, OQ-06 |
+| X-08 | Supabase Singapore, Vercel, Google Document AI | Data must stay local (Maria Q3); third-party API pending (OQ-36) | 5.4, 5.5 |
+| X-09 | Phase 1 = 207 to 281 h, fixed fee, 30/30/30/10, Mekari comparison | Sized for a different product; new scenario in 17.6 | 10.2, 11, 12 |
+| X-10 | Demo on Wed 30 Sep 2026 | Did not happen; no new date (OQ-41) | header, 1.1, 4 |
+| X-11 | HRIS/ERP sync is Phase 2 | ERP link is the main job | 2.1, 2.3 |
+| X-12 | Scope fixed before any SOW (OQ-11) | Scope changed again with no SOW (OQ-42) | 8, OQ-11 |
+
 ---
 
 ## 10. Deal and stages
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> Stage dates, payment split (30/30/30/10) and the Phase 1 scope below were for the standalone app. New stages and payment points are set after the ERP answers (17.7).
 
 ### 10.1 The deal at a glance
 
@@ -455,6 +532,8 @@ Dates after Stage 0 are set in the proposal, not here, because they depend on Fa
 ---
 
 ## 11. Commercial terms and change control
+
+> **Partly valid (v3.0).** Change control (11.4) and the SOW checklist (11.3) still apply. The pricing model and payment split (11.1, 11.2) are not decided for the new scope (17.6).
 
 ### 11.1 Pricing model
 
@@ -497,6 +576,9 @@ Recommended (pending Farrel review): **fixed fee per phase with milestone paymen
 ---
 
 ## 12. Financials
+
+> **SUPERSEDED by v3.0 (section 17).** Describes the earlier standalone app. Kept for history; do not use for scope, hours or price.
+> The 207 to 281 h estimate and the price tables are for a different product. New scenario: 17.6. Tax notes (12.6) still apply.
 
 All prices below are **scenarios for Farrel to choose from, not quotes**. Nothing here is a Ruangguru fact. Currency conversions use about Rp18,000 per USD (the rupiah was around Rp17,950 per USD on 25 Sep 2026; re-check before quoting).
 
@@ -595,6 +677,8 @@ The last row is the main financial risk: every hour over the estimate comes out 
 
 ## 13. Growth within Ruangguru
 
+> **Not re-checked in v3.0.** Written for the standalone app; review after the scope is signed.
+
 This plan covers one client. Growth means more work from Ruangguru, and making this job reusable later.
 
 | Opportunity | When | Condition |
@@ -611,6 +695,8 @@ Selling the same product to other companies (a SaaS) is out of scope for this pl
 ---
 
 ## 14. Dependencies on Ruangguru
+
+> **Extended in v3.0:** see 17.8 for the ERP-specific list.
 
 What Farrel needs from Ruangguru, and what happens if it is late.
 
@@ -648,4 +734,113 @@ Checked 28 Sep 2026. Market and tax facts only; nothing here is a Ruangguru fact
 - PPh 21 for tenaga ahli under PMK 168/2023 (Ortax): https://ortax.org/penghitungan-pph-pasal-21-tenaga-ahli
 - PPh 23 on services (Ortax): https://ortax.org/pph-pasal-23-atas-jasa-objek-tarif-dan-cara-hitung
 - Rupiah rate, 25 Sep 2026 (Pintu): https://pintu.co.id/news/292510-kurs-rupiah-hari-ini-25-september-2026
+- Verihubs quotation No. 2026/K-1971/S.Pn/1971-VIN, dated 9 Oct 2026, valid to 31 Dec 2026 (the document itself; terms in 17.6). Price context only: Verihubs is a competitor.
+- DigitalOcean droplet price used for the test-server figure (fetched 12 Oct 2026; the server size is a guess)
 - Data stored abroad, UU PDP and PP 33/2026 (CNBC Indonesia, 17 Sep 2026): https://www.cnbcindonesia.com/tech/20260917120936-37-768680/data-warga-ri-banyak-disimpan-di-luar-negeri-pakar-ingatkan-soal-ini
+
+---
+
+## 17. v3.0 direction: OCR and rules inside the Ruangguru ERP
+
+Added 12 Oct 2026. **This section is the source of truth for scope.** Everything here is either (a) said by Farrel or Maria, (b) from a document named in 16, or (c) marked UNKNOWN, ASSUMPTION or MOCK. Nothing about the ERP is known beyond what is written in 17.3.
+
+### 17.1 Goal
+
+Put receipt reading and claim rules inside Ruangguru's existing ERP: an employee photographs a receipt, the system reads the amount, date and merchant, fills the claim, suggests the category, and tells Finance what breaks the rules (caps, duplicates). One-sentence goal for the next demo: **"A receipt photo fills the claim, sets the category, and flags what breaks the rules."** Final wording waits for OQ-41.
+
+### 17.2 Scope
+
+**In scope (target for the contract, not yet agreed):**
+
+- Receipt reading (own OCR engine): merchant, total, date, time; printed receipts first; handwriting with a human-check path.
+- Category suggestion from the merchant (e.g. Gojek is Transport).
+- Total goes into the ERP's existing "amount proposed" field (Maria Q4).
+- Rules: per-claim category limit and near-limit (kept from the old engine); **monthly cap per sub-category** (new, needs claim history); weekend and off-hours; missing receipt.
+- Duplicate detection: field match (amount, date, merchant) and file match (kept), plus picture similarity (new).
+- Human-check queue for low-confidence reads.
+- Link to the ERP (effort UNKNOWN until OQ-28 to OQ-30).
+
+**Out of scope until its own line and price:** photo-edit/Photoshop detection (OQ-37); building or replacing ERP screens beyond the hooks needed; paying employees; offline reading (Maria Q5: online is fine); native apps.
+
+### 17.3 What is known about the ERP (everything else is UNKNOWN)
+
+| Fact | Source |
+|---|---|
+| The ERP exists and has a claim form with an "amount proposed" field | Maria Q4 |
+| Data must stay on a local server or the company's private cloud | Maria Q3 |
+| Online use is fine | Maria Q5 |
+| Caps are set in the regulation, monthly per sub-category (example: fuel) | Maria Q7 |
+| Category decides who approves | Maria Q7 |
+| Stack, vendor, API, test copy, login, claim data model, caps, approval hierarchy, claim history | **UNKNOWN** (OQ-28 to OQ-33) |
+
+### 17.4 Maria's answers, recorded (12 Oct 2026)
+
+| # | Maria said | What it changes |
+|---|---|---|
+| 1 | Mostly printed receipts; handwritten ones are possible | Printed first; human-check path for the rest (OQ-39) |
+| 2 | She is asking the tech team about third-party APIs | **Pending** (OQ-36). Blocks any cloud OCR choice |
+| 3 | Data must stay on a local server | Rules out the old Supabase/Vercel/Google stack as written |
+| 4 | The total can go straight into the existing "amount proposed" field | Integration point |
+| 5 | Online only; no offline need | Simplifies design |
+| 6 | Duplicate check needed | Scope; "edited photo" part unclear (OQ-37) |
+| 7 | OCR should set the category; caps are monthly per sub-category | Monthly cap rule, category suggestion |
+
+### 17.5 What survives, what is dropped
+
+**Survives (as design and tests):** rule definitions and plain-language reasons; score and risk bands (5.3, placeholder weights); config-driven rules; the engine tests and the planted-problems fixture method. The engine file (`src/lib/rules/engine.ts`) is plain TypeScript with no framework imports; it can be reused as code only if the ERP can call it. Otherwise it is a port (OQ-28, OQ-29).
+
+**Dropped:** login and roles, employee form, Finance queue and detail, batch approve, CSV export, Coming tab, PWA, demo harness; the Supabase and Vercel stack; the 207 to 281 h estimate and its prices; the Mekari buy-versus-build table; the Admin and org-import screens (the ERP holds employees, ASSUMPTION).
+
+**New work:** the OCR engine; category mapping; monthly caps; picture-similarity duplicate check; human-check queue; the ERP link.
+
+### 17.6 Pricing: Option A (own OCR and rules). A scenario, not a quote.
+
+Source: `summary-5000-receipts.md` (12 Oct 2026). Rp million, before tax. **5,000 receipts a month is Farrel's figure, unconfirmed.** Hours and the Rp400K/h rate are guesses. The own OCR is unproven on Ruangguru's receipts, including handwriting.
+
+| Line | Farrel's scenario | Verihubs quote (competitor, for context only) |
+|---|---|---|
+| Fixed monthly | Retainer 8 h x Rp400K = 3.2 per month, from month 4 | Platform fee 10.0 per month, 12-month minimum |
+| Per receipt | none | Rp700 per "hit" (5,000 x 700 = 3.5 per month) |
+| One-time | Discovery 24 h = 9.6; build 320 h = 128.0 | none listed |
+| Year 1 | **166.4** | **162.0** (179.8 with PPN 11%) |
+| Year 3 | **243.2** | **486.0** (539.5 with PPN) |
+
+- Verihubs is **Rp4.4M cheaper in Year 1**; Farrel is cheaper by about Rp242.8M by Year 3 and passes it at about month 13.
+- Verihubs reads receipts only: no rules, caps, category, duplicates or ERP link. It does not replace the layer Farrel builds.
+- Verihubs facts that are **not** in the written quote: handwriting (told to Farrel in a meeting), fields returned, accuracy, what counts as a "hit", price after month 12, local hosting option. The quote runs on GCP, Tencent or AWS (cloud), which conflicts with Maria Q3 unless Verihubs offers a local option (UNKNOWN).
+- Farrel's estimated cost to deliver (his time at Rp250K/h plus a test server): about Rp94.5M for Year 1, giving a keep of about Rp71.9M before final tax. Known cash cost: Rp5.2M test server (DigitalOcean 4 GB / 2 vCPU, $24 a month; price sourced, size guessed), plus Rp4.16M prepaid withholding if invoicing as an individual. Tools, production server and final income tax are UNKNOWN. **The keep is overstated until they are filled in.**
+- CPU is enough, no GPU (assumed 5 seconds of CPU per receipt, a guess until tested).
+- The claim "cheaper over three years" only holds if Ruangguru accepts an own-built OCR on its own server. Farrel's strongest argument is local data hosting, if the tech team bans third-party APIs.
+- Do not quote any of these numbers to Ruangguru before OQ-14, OQ-28 to OQ-30, OQ-40 and OQ-42 are answered.
+
+### 17.7 Stages (proposed shape; dates not set)
+
+| Stage | What happens | Exit |
+|---|---|---|
+| 0. Discovery | ERP and policy questions (Indonesian list in the project files), sample receipts, accuracy test on a few photos with fake or approved data only | OQ-28 to OQ-36, OQ-40 answered; test result written down |
+| 1. Contract | Fixed quote for the ERP scope, in writing | Signed SOW and down payment (OQ-42) |
+| 2. Build | OCR, category, rules, duplicates, human-check, ERP link | Acceptance checklist per milestone, set in the SOW |
+| 3. Pilot and rollout | One team first, then the company | Set in the SOW |
+
+Only the discovery stage may start before a signed SOW, and only as a short accuracy test (decision log 2026-09-28).
+
+### 17.8 Dependencies on Ruangguru and the ERP team
+
+ERP access and a test copy (OQ-30); the ERP's technical contact (OQ-28, OQ-29); the server decision and approval (OQ-34); the tech team's answer on third-party APIs (OQ-36); the written reimbursement regulation with categories, sub-categories and cap amounts (OQ-32); sample receipts (OQ-40); a second contact besides the financial lead (section 7); a signed SOW (OQ-42).
+
+### 17.9 What is mocked or stubbed until the answers arrive
+
+Everything below must be labeled MOCK or STUB in code, in this plan, and in any stakeholder document. A demo must not imply the ERP link works.
+
+- The ERP itself: a stand-in claim form and "amount proposed" field.
+- Employees, claim history and monthly totals.
+- Categories, sub-categories, caps, working hours.
+- Approval routing.
+- Any OCR result not produced by a real model run on real receipts.
+- The old demo app in this repo (frozen, already labeled MOCK).
+
+Real Ruangguru receipts are personal data. Do not use them until OQ-34 and OQ-36 allow it.
+
+### 17.10 Questions for Maria and the ERP team
+
+The Indonesian question lists (plain language, no jargon) are in the project files: `pivot/erp-pivot-review.md`, section 8. They map to OQ-28 to OQ-42.
